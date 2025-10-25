@@ -1,0 +1,7 @@
+# Discord bot token
+token: "DISCORD_BOT_TOKEN"
+
+# Discord bot status
+statusMode: ONLINE # Valid Modes: ONLINE, IDLE, DND, INVISIBLE"
+statusType: WATCHING # Valid Types: PLAYING, LISTENING, WATCHING, COMPETING, NONE
+statusText: "My Velocity Bot"
