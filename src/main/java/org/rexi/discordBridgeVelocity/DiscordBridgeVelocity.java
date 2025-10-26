@@ -11,15 +11,22 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.rexi.discordBridgeVelocity.commands.DiscordBridgeCommand;
+import org.rexi.discordBridgeVelocity.commands.LinkCommand;
+import org.rexi.discordBridgeVelocity.discord.InfoListener;
+import org.rexi.discordBridgeVelocity.discord.LinkListener;
+import org.rexi.discordBridgeVelocity.utils.DBManager;
 import org.slf4j.Logger;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Plugin(id = "discord_bridge_velocity", name = "Discord Bridge Velocity", version = BuildConstants.VERSION, authors = {"Rexi666"})
@@ -28,10 +35,9 @@ public class DiscordBridgeVelocity {
     private final ProxyServer server;
     private JDA jda;
     private final Path dataDirectory;
+    private DBManager dbManager;
 
-    private String token;
-
-    private final Map<String, String> configValues = new HashMap<>();
+    private Map<String, String> configValues = new HashMap<>();
     @Inject
     public DiscordBridgeVelocity(ProxyServer server, @DataDirectory Path dataDirectory) {
         this.server = server;
@@ -39,14 +45,16 @@ public class DiscordBridgeVelocity {
     }
 
     @Inject
-    private Logger logger;
+    public Logger logger;
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
         loadConfig();
+        initializeDatabase();
         initializeBot();
 
         server.getCommandManager().register("discordbridge", new DiscordBridgeCommand(this));
+        server.getCommandManager().register("link", new LinkCommand(this));
     }
 
     @Subscribe
@@ -54,10 +62,31 @@ public class DiscordBridgeVelocity {
         shutdownBot();
     }
 
+    private void initializeDatabase() {
+        try {
+            String type = getConfig("database.type", "SQLITE");
+            String sqliteFile = dataDirectory.resolve(getConfig("database.sqlite-file", "database.db")).toString();
+
+            String host = getConfig("database.mysql.host", "localhost");
+            int port = getConfig("database.mysql.port", 3306);
+            String dbName = getConfig("database.mysql.database", "discordbridge");
+            String user = getConfig("database.mysql.username", "user");
+            String pass = getConfig("database.mysql.password", "pass");
+
+            dbManager = new DBManager(type, sqliteFile, host, port, dbName, user, pass);
+        } catch (Exception e) {
+            logger.error("❌ Error trying to connect to database", e);
+        }
+    }
+
+    public DBManager getDatabase() {
+        return dbManager;
+    }
+
     public void initializeBot() {
         try {
             String token = getConfig("token", "DISCORD_BOT_TOKEN");
-            if (token == null || token.isEmpty() || token.equals("DISCORD_BOT_TOKEN")) {
+            if (token.equals("DISCORD_BOT_TOKEN")) {
                 logger.warn("No valid Discord bot token found in configuration. Discord bot will not be initialized.");
                 return;
             }
@@ -68,9 +97,6 @@ public class DiscordBridgeVelocity {
             String statusText = getConfig("statusText", "My Velocity Bot");
             String statusMode = getConfig("statusMode", "ONLINE");
 
-            logger.info("Type: "+ statusType);
-            logger.info("Mode: "+ statusMode);
-
             Activity activity;
             if (statusText == null || statusText.isEmpty()) {
                 activity = null;
@@ -80,23 +106,18 @@ public class DiscordBridgeVelocity {
                 switch (statusType.toUpperCase()) {
                     case "LISTENING":
                         activity = Activity.listening(statusText);
-                        logger.info("1");
                         break;
                     case "WATCHING":
                         activity = Activity.watching(statusText);
-                        logger.info("2");
                         break;
                     case "COMPETING":
                         activity = Activity.competing(statusText);
-                        logger.info("3");
                         break;
                     case "PLAYING":
                         activity = Activity.playing(statusText);
-                        logger.info("4");
                         break;
                     default:
                         activity = Activity.customStatus(statusText);
-                        logger.info("5");
                         break;
                 }
             }
@@ -106,19 +127,15 @@ public class DiscordBridgeVelocity {
                 switch (statusMode.toUpperCase()) {
                     case "IDLE":
                         status = OnlineStatus.IDLE;
-                        logger.info("A");
                         break;
                     case "DND":
                         status = OnlineStatus.DO_NOT_DISTURB;
-                        logger.info("B");
                         break;
                     case "INVISIBLE":
                         status = OnlineStatus.INVISIBLE;
-                        logger.info("C");
                         break;
                     default:
                         status = OnlineStatus.ONLINE;
-                        logger.info("D");
                         break;
                 }
             }
@@ -126,11 +143,24 @@ public class DiscordBridgeVelocity {
             jda = JDABuilder.createDefault(token)
                     .setActivity(activity)
                     .setStatus(status)
-                    //.addEventListeners(new DiscordListener())
+                    .addEventListeners(new LinkListener(this))
+                    .addEventListeners(new InfoListener(this))
                     .setAutoReconnect(true)
                     .build();
 
             jda.awaitReady();
+
+            jda.updateCommands().addCommands(
+                    Commands.slash("link", "Link your Discord account with Minecraft"),
+                    Commands.slash("info", "Get information about your linked account")
+            ).queue();
+
+            jda.getGuildById("956988393647124510")
+                    .updateCommands()
+                    .addCommands(
+                            Commands.slash("link", "Link your Discord account with Minecraft"),
+                            Commands.slash("info", "Get information about your linked account")
+                    ).queue();
 
             logger.info("✅ Discord bot initialized: " + jda.getSelfUser().getName());
 
@@ -149,17 +179,30 @@ public class DiscordBridgeVelocity {
                 logger.error("Error while shutting down Discord bot:", e);
             }
         }
+        try {
+            getDatabase().close();
+        } catch (Exception e) {
+            logger.error("Error while closing db connection:", e);
+        }
     }
 
     public JDA getJDA() {
         return jda;
     }
 
-    public String getConfig(String key, String fallback) {
-        if (!configValues.containsKey(key)) {
+    public <T> T getConfig(String path, T fallback) {
+        String[] keys = path.split("\\.");
+        Object current = configValues;
+        for (String key : keys) {
+            if (!(current instanceof Map<?, ?> map)) return fallback;
+            current = map.get(key);
+            if (current == null) return fallback;
+        }
+        try {
+            return (T) current;
+        } catch (ClassCastException e) {
             return fallback;
         }
-        return configValues.get(key);
     }
 
     public void loadConfig() {
@@ -170,30 +213,31 @@ public class DiscordBridgeVelocity {
             File configFile = new File(folder, "config.yml");
 
             if (!configFile.exists()) {
-                List<String> defaultConfig = List.of(
-                        "# Discord bot token",
-                        "token: \"DISCORD_BOT_TOKEN\"",
-                        "",
-                        "# Discord bot status",
-                        "statusMode: ONLINE # ONLINE, IDLE, DND, INVISIBLE",
-                        "statusType: WATCHING # Valid Types: PLAYING, LISTENING, WATCHING, COMPETING, NONE",
-                        "statusText: \"My Velocity Bot\""
-                );
-                Files.write(configFile.toPath(), defaultConfig);
+                try (InputStream in = getClass().getClassLoader().getResourceAsStream("config.yml")) {
+                    if (in != null) {
+                        Files.copy(in, configFile.toPath());
+                    } else {
+                        logger.error("Error trying to read or create config.yml");
+                    }
+                } catch (IOException e) {
+                    logger.error("Error trying to read or create config.yml", e);
+                }
             }
 
-            List<String> lines = Files.readAllLines(configFile.toPath());
-            for (String line : lines) {
-                line = line.trim();
-                if (line.startsWith("#") || !line.contains(":")) continue;
-
-                String[] parts = line.split(":", 2);
-                String key = parts[0].trim();
-                String value = parts[1].split("#", 2)[0].trim().replace("\"", "");
-                configValues.put(key, value);
-            }
+            // Cargar config
+            Yaml yaml = new Yaml(new SafeConstructor());
+            configValues = yaml.load(new FileInputStream(configFile));
         } catch (IOException e) {
             logger.error("Error trying to read or create config.yml", e);
         }
+    }
+
+    public static final LegacyComponentSerializer LEGACY_HEX_SERIALIZER = LegacyComponentSerializer.builder()
+            .character('&')
+            .hexColors() // Habilita el soporte de hex
+            .useUnusualXRepeatedCharacterHexFormat() // Soporta &x&r&r&g&g&b&b
+            .build();
+    public Component legacy(String s) {
+        return LEGACY_HEX_SERIALIZER.deserialize(s);
     }
 }
