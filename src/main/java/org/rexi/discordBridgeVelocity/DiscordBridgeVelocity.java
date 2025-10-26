@@ -179,11 +179,6 @@ public class DiscordBridgeVelocity {
                 logger.error("Error while shutting down Discord bot:", e);
             }
         }
-        try {
-            getDatabase().close();
-        } catch (Exception e) {
-            logger.error("Error while closing db connection:", e);
-        }
     }
 
     public JDA getJDA() {

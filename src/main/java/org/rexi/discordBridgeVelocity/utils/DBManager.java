@@ -5,30 +5,50 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class DBManager {
-    private Connection connection;
+
     private final String dbType;
+    private final String sqliteFile;
+    private final String mysqlHost;
+    private final int mysqlPort;
+    private final String mysqlDatabase;
+    private final String mysqlUser;
+    private final String mysqlPass;
 
     public DBManager(String dbType, String sqliteFile, String mysqlHost, int mysqlPort, String mysqlDatabase, String mysqlUser, String mysqlPass) throws SQLException {
         this.dbType = dbType.toLowerCase();
+        this.sqliteFile = sqliteFile;
+        this.mysqlHost = mysqlHost;
+        this.mysqlPort = mysqlPort;
+        this.mysqlDatabase = mysqlDatabase;
+        this.mysqlUser = mysqlUser;
+        this.mysqlPass = mysqlPass;
+
         if (dbType.equalsIgnoreCase("MYSQL")) {
             try {
                 Class.forName("com.mysql.cj.jdbc.Driver");
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
-            connection = DriverManager.getConnection(
-                    "jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase + "?useSSL=false",
-                    mysqlUser, mysqlPass
-            );
         } else {
             try {
                 Class.forName("org.sqlite.JDBC");
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
-            connection = DriverManager.getConnection("jdbc:sqlite:" + sqliteFile);
         }
+
         initTable();
+    }
+
+    private Connection getConnection() throws SQLException {
+        if (dbType.equalsIgnoreCase("MYSQL")) {
+            return DriverManager.getConnection(
+                    "jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase + "?useSSL=false",
+                    mysqlUser, mysqlPass
+            );
+        } else {
+            return DriverManager.getConnection("jdbc:sqlite:" + sqliteFile);
+        }
     }
 
     private void initTable() throws SQLException {
@@ -39,19 +59,13 @@ public class DBManager {
                 "linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                 "recovery_code TEXT UNIQUE NOT NULL" +
                 ")";
-        try (Statement stmt = connection.createStatement()) {
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
         }
     }
 
-    /**
-     * Guarda o actualiza un vínculo entre un jugador de Minecraft y un usuario de Discord.
-     * Si ya existe, se actualiza la información (nombre, Discord ID y recovery code).
-     */
-    public void saveLink(String uuid, String name, String discordId) throws SQLException {
-        checkConnection();
-        String recoveryCode = UUID.randomUUID().toString().substring(0, 8).toUpperCase(); // código único de recuperación
-
+    public void saveLink(String uuid, String name, String discordId) {
+        String recoveryCode = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         String sql = "INSERT INTO discord_links (minecraft_uuid, minecraft_name, discord_id, recovery_code) " +
                 "VALUES (?, ?, ?, ?) " +
                 "ON CONFLICT(minecraft_uuid) DO UPDATE SET " +
@@ -59,25 +73,23 @@ public class DBManager {
                 "discord_id = excluded.discord_id, " +
                 "recovery_code = excluded.recovery_code, " +
                 "linked_at = CURRENT_TIMESTAMP";
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid);
             stmt.setString(2, name);
             stmt.setString(3, discordId);
             stmt.setString(4, recoveryCode);
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
     public Optional<String> getDiscordId(String uuid) {
-        try {
-            checkConnection();
-            String sql = "SELECT discord_id FROM discord_links WHERE minecraft_uuid = ?";
-            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-                stmt.setString(1, uuid);
-                ResultSet rs = stmt.executeQuery();
-                if (rs.next()) return Optional.of(rs.getString("discord_id"));
-            }
+        String sql = "SELECT discord_id FROM discord_links WHERE minecraft_uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, uuid);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) return Optional.of(rs.getString("discord_id"));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -85,14 +97,11 @@ public class DBManager {
     }
 
     public Optional<String> getMinecraftUUID(String discordId) {
-        try {
-            checkConnection();
-            String sql = "SELECT minecraft_uuid FROM discord_links WHERE discord_id = ?";
-            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-                stmt.setString(1, discordId);
-                ResultSet rs = stmt.executeQuery();
-                if (rs.next()) return Optional.of(rs.getString("minecraft_uuid"));
-            }
+        String sql = "SELECT minecraft_uuid FROM discord_links WHERE discord_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, discordId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) return Optional.of(rs.getString("minecraft_uuid"));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -100,14 +109,11 @@ public class DBManager {
     }
 
     public Optional<String> getMinecraftName(String discordId) {
-        try {
-            checkConnection();
-            String sql = "SELECT minecraft_name FROM discord_links WHERE discord_id = ?";
-            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-                stmt.setString(1, discordId);
-                ResultSet rs = stmt.executeQuery();
-                if (rs.next()) return Optional.of(rs.getString("minecraft_name"));
-            }
+        String sql = "SELECT minecraft_name FROM discord_links WHERE discord_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, discordId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) return Optional.of(rs.getString("minecraft_name"));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -115,29 +121,14 @@ public class DBManager {
     }
 
     public Optional<String> getRecoveryCode(String uuid) {
-        try {
-            checkConnection();
-            String sql = "SELECT recovery_code FROM discord_links WHERE minecraft_uuid = ?";
-            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-                stmt.setString(1, uuid);
-                ResultSet rs = stmt.executeQuery();
-                if (rs.next()) return Optional.of(rs.getString("recovery_code"));
-            }
+        String sql = "SELECT recovery_code FROM discord_links WHERE minecraft_uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, uuid);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) return Optional.of(rs.getString("recovery_code"));
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return Optional.empty();
     }
-
-    public void close() throws SQLException {
-        if (connection != null && !connection.isClosed()) connection.close();
-    }
-
-    private synchronized void checkConnection() throws SQLException {
-        if (connection == null || connection.isClosed()) {
-            // vuelve a abrir la conexión
-            connection = DriverManager.getConnection("jdbc:sqlite:plugins/discord_bridge_velocity/database.db");
-        }
-    }
 }
-

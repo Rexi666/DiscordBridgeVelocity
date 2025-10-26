@@ -73,7 +73,8 @@ public class LinkListener extends ListenerAdapter {
                 .setColor(color)
                 .build();
 
-        plugin.getJDA().getUserById(userId).openPrivateChannel()
+        plugin.getJDA().retrieveUserById(userId)
+                .flatMap(user -> user.openPrivateChannel())
                 .flatMap(channel -> channel.sendMessageEmbeds(embed))
                 .queue(
                         success -> {

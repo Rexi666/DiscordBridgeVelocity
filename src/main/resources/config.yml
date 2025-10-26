@@ -72,7 +72,7 @@ discord_messages:
 
 messages:
   invalid-expired: "&cInvalid or expired link code"
-  link-success: "✅ In-Game account successfully linked with Discord!"
+  link-success: "&a✅ In-Game account successfully linked with Discord!"
   link-error: "&cError linking accounts."
   link-command: "&cUsage: /link <code>. You can get the code in Discord by using /link on any channel."
-  already-linked: "&c⚠️ Your account is already linked with a Discord account."
+  already-linked: "&c⚠ Your account is already linked with a Discord account."
