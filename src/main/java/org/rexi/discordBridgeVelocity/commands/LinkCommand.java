@@ -5,12 +5,12 @@ import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.exceptions.HierarchyException;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.rexi.discordBridgeVelocity.DiscordBridgeVelocity;
 import org.rexi.discordBridgeVelocity.utils.LinkManager;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -98,10 +98,11 @@ public class LinkCommand implements SimpleCommand {
         if (!guildId.equals("123456789123456789") && changeName) {
             plugin.getJDA().getGuildById(guildId).retrieveMemberById(discordId)
                     .queue(member -> {
-                        member.modifyNickname(player.getUsername())
-                                .queue(
-                                        error -> plugin.logger.error("Error trying to change nickname")
-                                );
+                        if (member.getGuild().getSelfMember().canInteract(member)) {
+                            member.modifyNickname(player.getUsername()).queue();
+                        } else {
+                            plugin.logger.warn("Error trying to change name: Player has higher role: "+discordId);
+                        }
                     }, error -> {
                         plugin.logger.error("Member couldnt be found: " + error.getMessage());
                     });
@@ -111,10 +112,11 @@ public class LinkCommand implements SimpleCommand {
             String role = plugin.getConfig("link.give_role.role_id", "123456789123456789");
             plugin.getJDA().getGuildById(guildId).retrieveMemberById(discordId)
                     .queue(member -> {
-                        member.getGuild().addRoleToMember(member, member.getGuild().getRoleById(role))
-                                .queue(
-                                        error -> plugin.logger.error("Error trying to assing role")
-                                );
+                        if (member.getGuild().getSelfMember().canInteract(member)) {
+                            member.getGuild().addRoleToMember(member, member.getGuild().getRoleById(role)).queue();
+                        } else {
+                            plugin.logger.warn("Error trying to change role: Player has higher role: "+discordId);
+                        }
                     }, error -> {
                         plugin.logger.error("Member couldnt be found: " + error.getMessage());
                     });

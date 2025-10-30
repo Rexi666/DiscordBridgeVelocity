@@ -55,11 +55,16 @@ public class DiscordBridgeVelocity {
 
         server.getCommandManager().register("discordbridge", new DiscordBridgeCommand(this));
         server.getCommandManager().register("link", new LinkCommand(this));
+
+        server.sendMessage(legacy("&aThe plugin DiscordBridgeVelocity has been enabled!"));
+        server.sendMessage(legacy("&bThank you for using Rexi666 plugins :D"));
     }
 
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
         shutdownBot();
+        server.sendMessage(legacy("&cThe plugin DiscordBridgeVelocity has been disabled!"));
+        server.sendMessage(legacy("&bThank you for using Rexi666 plugins :D"));
     }
 
     private void initializeDatabase() {
