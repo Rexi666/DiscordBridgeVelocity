@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -18,6 +19,7 @@ import org.rexi.discordBridgeVelocity.commands.DiscordBridgeCommand;
 import org.rexi.discordBridgeVelocity.commands.LinkCommand;
 import org.rexi.discordBridgeVelocity.discord.InfoListener;
 import org.rexi.discordBridgeVelocity.discord.LinkListener;
+import org.rexi.discordBridgeVelocity.discord.UserInfoListener;
 import org.rexi.discordBridgeVelocity.utils.DBManager;
 import org.slf4j.Logger;
 import org.yaml.snakeyaml.Yaml;
@@ -150,6 +152,7 @@ public class DiscordBridgeVelocity {
                     .setStatus(status)
                     .addEventListeners(new LinkListener(this))
                     .addEventListeners(new InfoListener(this))
+                    .addEventListeners(new UserInfoListener(this))
                     .setAutoReconnect(true)
                     .build();
 
@@ -157,14 +160,18 @@ public class DiscordBridgeVelocity {
 
             jda.updateCommands().addCommands(
                     Commands.slash("link", "Link your Discord account with Minecraft"),
-                    Commands.slash("info", "Get information about your linked account")
+                    Commands.slash("info", "Get information about your linked account"),
+                    Commands.slash("userinfo", "Shows user information")
+                            .addOption(OptionType.STRING, "user", "ID or mention", true)
             ).queue();
 
             jda.getGuildById("956988393647124510")
                     .updateCommands()
                     .addCommands(
                             Commands.slash("link", "Link your Discord account with Minecraft"),
-                            Commands.slash("info", "Get information about your linked account")
+                            Commands.slash("info", "Get information about your linked account"),
+                            Commands.slash("userinfo", "Shows user information")
+                                    .addOption(OptionType.STRING, "user", "ID or mention", true)
                     ).queue();
 
             logger.info("✅ Discord bot initialized: " + jda.getSelfUser().getName());

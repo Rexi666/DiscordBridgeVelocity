@@ -56,7 +56,7 @@ public class DBManager {
                 "minecraft_uuid TEXT PRIMARY KEY, " +
                 "discord_id TEXT NOT NULL, " +
                 "minecraft_name TEXT NOT NULL, " +
-                "linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "linked_at BIGINT NOT NULL, " +
                 "recovery_code TEXT UNIQUE NOT NULL" +
                 ")";
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
@@ -66,18 +66,19 @@ public class DBManager {
 
     public void saveLink(String uuid, String name, String discordId) {
         String recoveryCode = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        String sql = "INSERT INTO discord_links (minecraft_uuid, minecraft_name, discord_id, recovery_code) " +
-                "VALUES (?, ?, ?, ?) " +
+        String sql = "INSERT INTO discord_links (minecraft_uuid, minecraft_name, discord_id, recovery_code, linked_at) " +
+                "VALUES (?, ?, ?, ?, ?) " +
                 "ON CONFLICT(minecraft_uuid) DO UPDATE SET " +
                 "minecraft_name = excluded.minecraft_name, " +
                 "discord_id = excluded.discord_id, " +
                 "recovery_code = excluded.recovery_code, " +
-                "linked_at = CURRENT_TIMESTAMP";
+                "linked_at = excluded.linked_at";
         try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid);
             stmt.setString(2, name);
             stmt.setString(3, discordId);
             stmt.setString(4, recoveryCode);
+            stmt.setLong(5, System.currentTimeMillis());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -126,6 +127,19 @@ public class DBManager {
             stmt.setString(1, uuid);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) return Optional.of(rs.getString("recovery_code"));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    public Optional<Long> getLinkDate(String identifier) {
+        String sql = "SELECT linked_at FROM discord_links WHERE discord_id = ? OR minecraft_uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, identifier);
+            stmt.setString(2, identifier);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) return Optional.of(rs.getLong("linked_at"));
         } catch (SQLException e) {
             e.printStackTrace();
         }
