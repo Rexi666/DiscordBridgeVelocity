@@ -96,10 +96,19 @@ discord_messages:
       - "Discord ID: `{discord_id}`"
       - ""
       - "⚠️ Account Not Linked"
+  unlink_confirm:
+    title: "⚠️ Confirm Unlink"
+    color: 220235200
+    message:
+      - "Are you sure you want to unlink the Discord account {userId} from Minecraft player `{username}`?"
+    message_successful: "✅ Successfully unlinked Discord account {userId} from Minecraft player `{username}`."
+    message_cancelled: "❌ Unlinking process cancelled."
   only_server: "❌ This command can only be used on a server."
   no_permission: "🚫 You dont have permission to use that command."
   userinfo_usage: "Usage: `/userinfo <id or mention>`"
   no_user_found: "❌ No user could be found with id: `{userID}`."
+  unlink_usage: "Usage: `/unlink <id or mention>`"
+  unlink_no_linked: "⚠️ User `{discordTag}` is not linked."
 
 messages:
   invalid-expired: "&cInvalid or expired link code"

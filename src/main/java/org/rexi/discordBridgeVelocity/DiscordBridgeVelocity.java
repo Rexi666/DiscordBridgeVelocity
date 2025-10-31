@@ -19,6 +19,7 @@ import org.rexi.discordBridgeVelocity.commands.DiscordBridgeCommand;
 import org.rexi.discordBridgeVelocity.commands.LinkCommand;
 import org.rexi.discordBridgeVelocity.discord.InfoListener;
 import org.rexi.discordBridgeVelocity.discord.LinkListener;
+import org.rexi.discordBridgeVelocity.discord.UnlinkListener;
 import org.rexi.discordBridgeVelocity.discord.UserInfoListener;
 import org.rexi.discordBridgeVelocity.utils.DBManager;
 import org.slf4j.Logger;
@@ -153,6 +154,7 @@ public class DiscordBridgeVelocity {
                     .addEventListeners(new LinkListener(this))
                     .addEventListeners(new InfoListener(this))
                     .addEventListeners(new UserInfoListener(this))
+                    .addEventListeners(new UnlinkListener(this))
                     .setAutoReconnect(true)
                     .build();
 
@@ -162,6 +164,8 @@ public class DiscordBridgeVelocity {
                     Commands.slash("link", "Link your Discord account with Minecraft"),
                     Commands.slash("info", "Get information about your linked account"),
                     Commands.slash("userinfo", "Shows user information")
+                            .addOption(OptionType.STRING, "user", "ID or mention", true),
+                    Commands.slash("unlink", "Unlinks account")
                             .addOption(OptionType.STRING, "user", "ID or mention", true)
             ).queue();
 
@@ -171,6 +175,8 @@ public class DiscordBridgeVelocity {
                             Commands.slash("link", "Link your Discord account with Minecraft"),
                             Commands.slash("info", "Get information about your linked account"),
                             Commands.slash("userinfo", "Shows user information")
+                                    .addOption(OptionType.STRING, "user", "ID or mention", true),
+                            Commands.slash("unlink", "Unlinks account")
                                     .addOption(OptionType.STRING, "user", "ID or mention", true)
                     ).queue();
 

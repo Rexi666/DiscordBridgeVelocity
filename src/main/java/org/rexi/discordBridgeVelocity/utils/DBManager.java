@@ -145,4 +145,15 @@ public class DBManager {
         }
         return Optional.empty();
     }
+
+    public void unlinkUser(String discordIdOrUuid) {
+        String sql = "DELETE FROM discord_links WHERE discord_id = ? OR minecraft_uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, discordIdOrUuid);
+            stmt.setString(2, discordIdOrUuid);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
