@@ -121,12 +121,13 @@ public class DBManager {
         return Optional.empty();
     }
 
-    public Optional<String> getRecoveryCode(String uuid) {
-        String sql = "SELECT recovery_code FROM discord_links WHERE minecraft_uuid = ?";
+    public Optional<String> getRecoveryCode(String identifier) {
+        String sql = "SELECT recovery_code FROM discord_links WHERE minecraft_uuid = ? OR discord_id = ?";
         try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, uuid);
+            stmt.setString(1, identifier);
+            stmt.setString(2, identifier);
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) return Optional.of(rs.getString("recovery_code"));
+            if (rs.next()) return Optional.ofNullable(rs.getString("recovery_code"));
         } catch (SQLException e) {
             e.printStackTrace();
         }

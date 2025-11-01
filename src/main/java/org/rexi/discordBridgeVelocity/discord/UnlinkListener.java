@@ -1,15 +1,16 @@
 package org.rexi.discordBridgeVelocity.discord;
 
-
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.rexi.discordBridgeVelocity.DiscordBridgeVelocity;
 
-import java.awt.*;
-import java.util.List;
 import java.util.Optional;
 
 public class UnlinkListener extends ListenerAdapter {
@@ -24,74 +25,37 @@ public class UnlinkListener extends ListenerAdapter {
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         if (!event.getName().equalsIgnoreCase("unlink")) return;
 
-        Member executor = event.getMember();
-        if (executor == null) {
-            event.reply(plugin.getConfig("discord_messages.only_server", "❌ This command can only be used on a server."))
-                    .setEphemeral(true).queue();
-            return;
-        }
-
-        // Comprobamos permisos
-        List<String> allowedRoles = plugin.getConfig("admin_commands.allowed_roles", List.of());
-        boolean hasPermission = executor.hasPermission(net.dv8tion.jda.api.Permission.ADMINISTRATOR)
-                || executor.getRoles().stream().anyMatch(role -> allowedRoles.contains(role.getId()));
-
-        if (!hasPermission) {
-            event.reply(plugin.getConfig("discord_messages.no_permission", "🚫 You don't have permission to use this command."))
-                    .setEphemeral(true).queue();
-            return;
-        }
-
-        // Obtener argumento <id/@>
-        String arg = event.getOption("user") != null ? event.getOption("user").getAsString() : null;
-        if (arg == null || arg.isEmpty()) {
-            event.reply(plugin.getConfig("discord_messages.unlink_usage", "Usage: `/unlink <id or mention>`"))
-                    .setEphemeral(true).queue();
-            return;
-        }
-
-        String userId = arg.replaceAll("[^0-9]", ""); // eliminar caracteres no numéricos
-        plugin.getJDA().retrieveUserById(userId).queue(user -> {
-            if (user == null) {
-                event.reply(plugin.getConfig("discord_messages.no_user_found", "❌ No user could be found with id: `{userID}`.")
-                                .replace("{userID}", userId))
-                        .setEphemeral(true)
-                        .queue();
-                return;
-            }
-
-            // Verificamos si el usuario tiene un vínculo
-            Optional<String> minecraftName = plugin.getDatabase().getMinecraftName(userId);
-            if (minecraftName.isEmpty()) {
-                event.reply(plugin.getConfig("discord_messages.unlink_no_linked", "⚠️ User `{discordTag}` is not linked.")
-                                .replace("{discordTag}", "<@" + userId + ">"))
-                        .setEphemeral(true)
-                        .queue();
-                return;
-            }
-
-            EmbedBuilder embed = new EmbedBuilder()
-                    .setTitle(plugin.getConfig("discord_messages.unlink_confirm.title", "⚠️ Confirm Unlink"))
-                    .setColor(plugin.getConfig("discord_messages.unlink_confirm.color", 220235200))
-                    .setDescription(plugin.getConfig("discord_messages.unlink_confirm.message", "Are you sure you want to unlink the Discord account {userId} from Minecraft player `{username}`?")
-                            .replace("{userId}", "<@" + userId + ">")
-                            .replace("{username}", minecraftName.get()));
-
-            // Enviar mensaje con botones
-            event.replyEmbeds(embed.build())
-                    .addActionRow(
-                            net.dv8tion.jda.api.interactions.components.buttons.Button.success("unlink_yes:" + userId, "Yes"),
-                            net.dv8tion.jda.api.interactions.components.buttons.Button.danger("unlink_no:" + userId, "No")
-                    )
+        boolean unlinkEnabled = plugin.getConfig("unlink.enabled", true);
+        if (!unlinkEnabled) {
+            event.reply(plugin.getConfig("discord_messages.unlink_disabled", "🚫 The unlink command is currently disabled, contact and administrator to unlink your account."))
                     .setEphemeral(true)
                     .queue();
+            return;
+        }
 
-        }, failure -> {
-            event.reply(plugin.getConfig("discord_messages.no_user_found", "❌ No user could be found with id: `{userID}`.")
-                            .replace("{userID}", userId))
+        String discordId = event.getUser().getId();
+        Optional<String> minecraftName = plugin.getDatabase().getMinecraftName(discordId);
+
+        if (minecraftName.isEmpty()) {
+            event.reply(plugin.getConfig("discord_messages.unlink_no_linked", "⚠️ You don't have any linked Minecraft account."))
                     .setEphemeral(true)
                     .queue();
-        });
+            return;
+        }
+
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle(plugin.getConfig("discord_messages.unlink_confirm.title", "⚠️ Confirm Unlink"))
+                .setDescription(plugin.getConfig("discord_messages.unlink_confirm.message", "Are you sure you want to unlink your Minecraft account `{username}`?")
+                        .replace("{username}", minecraftName.get()))
+                .setColor(plugin.getConfig("discord_messages.unlink_confirm.color", 167539200));
+
+        event.replyEmbeds(embed.build())
+                .addActionRow(
+                        net.dv8tion.jda.api.interactions.components.buttons.Button.success("unlink_yes:" + discordId, plugin.getConfig("discord_messages.button_yes", "✅ Yes")),
+                        net.dv8tion.jda.api.interactions.components.buttons.Button.danger("unlink_no:" + discordId, plugin.getConfig("discord_messages.button_no", "❌ No"))
+                )
+                .setEphemeral(true)
+                .queue();
     }
 
     @Override
@@ -102,19 +66,79 @@ public class UnlinkListener extends ListenerAdapter {
         String action = idParts[0];
         String userId = idParts[1];
 
+        if (!event.getUser().getId().equals(userId)) {
+            event.reply("⚠️ This confirmation is not for you.").setEphemeral(true).queue();
+            return;
+        }
+
         if (action.equals("unlink_yes")) {
-            Optional<String> minecraftName = plugin.getDatabase().getMinecraftName(userId);
-            if (minecraftName.isPresent()) {
-                plugin.getDatabase().unlinkUser(userId);
-                event.editMessage(plugin.getConfig("discord_messages.unlink_confirm.message_successful", "✅ Successfully unlinked Discord account {userId} from Minecraft player `{username}`.")
-                        .replace("{userId}", "<@" + userId + ">")
-                        .replace("{username}", minecraftName.get())).setComponents().queue();
+            boolean requireCode = plugin.getConfig("unlink.require_code", true);
+
+            if (requireCode) {
+                TextInput codeInput = TextInput.create("security_code", plugin.getConfig("discord_messages.unlink_require_code", "Enter your security code"), TextInputStyle.SHORT)
+                        .setPlaceholder("A1B2C3D4")
+                        .setRequired(true)
+                        .build();
+
+                Modal modal = Modal.create("unlink_modal:" + userId, plugin.getConfig("discord_messages.unlink_confirm_button", "✅ Confirm Unlink with Security Code"))
+                        .addActionRow(codeInput)
+                        .build();
+
+                event.replyModal(modal).queue();
             } else {
-                event.editMessage(plugin.getConfig("discord_messages.unlink_no_linked", "⚠\uFE0F User `{discordTag}` is not linked.")
-                        .replace("{discordTag}", "<@" + userId + ">")).setComponents().queue();
+                Optional<String> minecraftName = plugin.getDatabase().getMinecraftName(userId);
+                if (minecraftName.isPresent()) {
+                    plugin.getDatabase().unlinkUser(userId);
+                    event.reply(plugin.getConfig("discord_messages.unlink_success", "✅ Your Minecraft account `{username}` has been unlinked.")
+                                    .replace("{username}", minecraftName.get()))
+                            .setEphemeral(true)
+                            .queue();
+                } else {
+                    event.reply(plugin.getConfig("discord_messages.unlink_no_linked", "⚠️ You don't have any linked Minecraft account."))
+                            .setEphemeral(true)
+                            .queue();
+                }
             }
         } else if (action.equals("unlink_no")) {
-            event.editMessage(plugin.getConfig("discord_messages.unlink_confirm.message_cancelled", "❌ Unlinking process cancelled.")).setComponents().queue();
+            event.reply(plugin.getConfig("discord_messages.unlink_cancelled", "❌ Unlink process cancelled."))
+                    .setEphemeral(true)
+                    .queue();
+        }
+    }
+
+    @Override
+    public void onModalInteraction(ModalInteractionEvent event) {
+        if (!event.getModalId().startsWith("unlink_modal:")) return;
+
+        String userId = event.getModalId().split(":")[1];
+        String enteredCode = event.getValue("security_code").getAsString();
+
+        Optional<String> realCode = plugin.getDatabase().getRecoveryCode(userId);
+        if (realCode.isEmpty()) {
+            event.reply(plugin.getConfig("discord_messages.unlink_no_code", "⚠️ You don't have a security code stored."))
+                    .setEphemeral(true)
+                    .queue();
+            return;
+        }
+
+        if (!realCode.get().equalsIgnoreCase(enteredCode.trim())) {
+            event.reply(plugin.getConfig("discord_messages.unlink_wrong_code", "❌ Incorrect security code."))
+                    .setEphemeral(true)
+                    .queue();
+            return;
+        }
+
+        Optional<String> minecraftName = plugin.getDatabase().getMinecraftName(userId);
+        if (minecraftName.isPresent()) {
+            plugin.getDatabase().unlinkUser(userId);
+            event.reply(plugin.getConfig("discord_messages.unlink_success", "✅ Your Minecraft account `{username}` has been unlinked.")
+                            .replace("{username}", minecraftName.get()))
+                    .setEphemeral(true)
+                    .queue();
+        } else {
+            event.reply(plugin.getConfig("discord_messages.unlink_no_linked", "⚠️ You don't have any linked Minecraft account."))
+                    .setEphemeral(true)
+                    .queue();
         }
     }
 }

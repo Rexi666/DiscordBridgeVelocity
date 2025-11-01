@@ -23,6 +23,10 @@ link:
     enabled: false
     role_id: "123456789123456789" # Replace with your role ID
 
+unlink:
+  enabled: true # Can players unlink their accounts?
+  require_code: true # Require security code to unlink
+
 admin_commands:
   allowed_roles: # Leave blank to only allow server admins. allowed_roles: []
     - "123456789123456789" # Replace with your admin role IDs
@@ -72,8 +76,6 @@ discord_messages:
       - "**Your Discord account is linked with the following in-game account:**"
       - ""
       - "Username: `{username}`"
-      - ""
-      - "To unlink your account, use `/unlink`"
   userinfo:
     title: "👤 User Information"
     color: 214000203
@@ -96,19 +98,33 @@ discord_messages:
       - "Discord ID: `{discord_id}`"
       - ""
       - "⚠️ Account Not Linked"
-  unlink_confirm:
+  forceunlink_confirm:
     title: "⚠️ Confirm Unlink"
     color: 220235200
-    message:
-      - "Are you sure you want to unlink the Discord account {userId} from Minecraft player `{username}`?"
+    message: "Are you sure you want to unlink the Discord account {userId} from Minecraft player `{username}`?"
     message_successful: "✅ Successfully unlinked Discord account {userId} from Minecraft player `{username}`."
     message_cancelled: "❌ Unlinking process cancelled."
+  unlink_confirm:
+    title: "⚠️ Confirm Unlink"
+    color: 167539200
+    message: "Are you sure you want to unlink your Minecraft account `{username}`?"
   only_server: "❌ This command can only be used on a server."
   no_permission: "🚫 You dont have permission to use that command."
   userinfo_usage: "Usage: `/userinfo <id or mention>`"
   no_user_found: "❌ No user could be found with id: `{userID}`."
-  unlink_usage: "Usage: `/unlink <id or mention>`"
-  unlink_no_linked: "⚠️ User `{discordTag}` is not linked."
+  forceunlink_usage: "Usage: `/unlink <id or mention>`"
+  forceunlink_no_linked: "⚠️ User `{discordTag}` is not linked."
+  unlink_disabled: "🚫 The unlink command is currently disabled, contact and administrator to unlink your account."
+  unlink_success: "✅ Your Minecraft account `{username}` has been unlinked."
+  unlink_cancelled: "❌ Unlink process cancelled."
+  unlink_no_linked: "⚠️ You don't have any linked Minecraft account."
+  unlink_no_code: "⚠️ You don't have a security code stored."
+  unlink_wrong_code: "❌ Incorrect security code."
+  unlink_require_code: "Enter your security code"
+  unlink_confirm_button: "✅ Confirm Unlink with Security Code"
+  unlink_confirming: "🔒 Please complete the security check..."
+  button_yes: "✅ Yes"
+  button_no: "❌ No"
 
 messages:
   invalid-expired: "&cInvalid or expired link code"
