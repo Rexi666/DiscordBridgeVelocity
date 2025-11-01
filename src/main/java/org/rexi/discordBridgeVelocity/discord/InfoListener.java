@@ -31,19 +31,10 @@ public class InfoListener extends ListenerAdapter {
             String titleError = plugin.getConfig("discord_messages.info-not-linked.title", "⚠\uFE0F Account Not Linked");
             List<String> descriptionError = plugin.getConfig("discord_messages.info-not-linked.message", fallback);
 
-            Object rawColor = plugin.getConfig("discord_messages.info-not-linked.color", 250000000);
-            int colorError;
-
-            if (rawColor instanceof Number) {
-                colorError = ((Number) rawColor).intValue();
-            } else {
-                colorError = Integer.parseInt(rawColor.toString());
-            }
-
             MessageEmbed errorEmbed = new EmbedBuilder()
                     .setTitle(titleError)
                     .setDescription(String.join("\n", descriptionError))
-                    .setColor(colorError)
+                    .setColor(Integer.parseInt(plugin.getConfig("discord_messages.info-not-linked.color", "FA0000"), 16))
                     .build();
 
             event.replyEmbeds(errorEmbed).setEphemeral(true).queue();
@@ -63,19 +54,10 @@ public class InfoListener extends ListenerAdapter {
         String titleError = plugin.getConfig("discord_messages.info.title", "\uD83D\uDD17 Linked Account Information");
         List<String> descriptionError = plugin.getConfig("discord_messages.info.message", fallback);
 
-        Object rawColor = plugin.getConfig("discord_messages.info.color", 214000203);
-        int colorError;
-
-        if (rawColor instanceof Number) {
-            colorError = ((Number) rawColor).intValue();
-        } else {
-            colorError = Integer.parseInt(rawColor.toString());
-        }
-
         MessageEmbed errorEmbed = new EmbedBuilder()
                 .setTitle(titleError)
                 .setDescription(String.join("\n", descriptionError).replace("{username}", playerName))
-                .setColor(colorError)
+                .setColor(Integer.parseInt(plugin.getConfig("discord_messages.info.color", "D600CB"), 16))
                 .build();
 
         event.replyEmbeds(errorEmbed).setEphemeral(true).queue();

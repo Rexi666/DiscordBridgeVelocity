@@ -35,7 +35,7 @@ admin_commands:
 discord_messages:
   link-message:
     title: "🔗 Link Your Account"
-    color: 214000203 # RGB without commas
+    color: D600CB # HEX COLOR
     message:
       - "**Link your Discord account with your in-game account!**"
       - ""
@@ -46,15 +46,15 @@ discord_messages:
   dm: "✅ Message sent via DM."
   dm-error:
     title: "⚠️ Unable to send DM"
-    color: 250000000
+    color: FA0000
     message: "Please, enable your DMs to receive messages from the bot."
   already-linked:
     title: "⚠️ Account Already Linked"
-    color: 250000000
+    color: FA0000
     message: "Your Discord account is already linked with an in-game account: {username}"
   link-successfully:
     title: "You have successfully linked your account!"
-    color: 008199002
+    color: 08C702
     message:
       - "**You have successfully linked your account!**"
       - ""
@@ -65,20 +65,20 @@ discord_messages:
       - "**Do not share it with ANYONE**"
   info-not-linked:
     title: "⚠️ Account Not Linked"
-    color: 250000000
+    color: FA0000
     message:
       - "Your Discord account is not linked with any in-game account."
       - "To link your account, use `/link`"
   info:
     title: "🔗 Linked Account Information"
-    color: 214000203
+    color: D600CB
     message:
       - "**Your Discord account is linked with the following in-game account:**"
       - ""
       - "Username: `{username}`"
   userinfo:
     title: "👤 User Information"
-    color: 214000203
+    color: D600CB
     message:
       - "**User Information:**"
       - ""
@@ -90,7 +90,7 @@ discord_messages:
       - "Recovery Code: `{recovery_code}`"
   userinfo_no_linked:
     title: "👤 User Information"
-    color: 250000000
+    color: FA0000
     message:
       - "**User Information:**"
       - ""
@@ -100,13 +100,13 @@ discord_messages:
       - "⚠️ Account Not Linked"
   forceunlink_confirm:
     title: "⚠️ Confirm Unlink"
-    color: 220235200
+    color: DBB000
     message: "Are you sure you want to unlink the Discord account {userId} from Minecraft player `{username}`?"
     message_successful: "✅ Successfully unlinked Discord account {userId} from Minecraft player `{username}`."
     message_cancelled: "❌ Unlinking process cancelled."
   unlink_confirm:
     title: "⚠️ Confirm Unlink"
-    color: 167539200
+    color: DBB000
     message: "Are you sure you want to unlink your Minecraft account `{username}`?"
   only_server: "❌ This command can only be used on a server."
   no_permission: "🚫 You dont have permission to use that command."
@@ -118,7 +118,6 @@ discord_messages:
   unlink_success: "✅ Your Minecraft account `{username}` has been unlinked."
   unlink_cancelled: "❌ Unlink process cancelled."
   unlink_no_linked: "⚠️ You don't have any linked Minecraft account."
-  unlink_no_code: "⚠️ You don't have a security code stored."
   unlink_wrong_code: "❌ Incorrect security code."
   unlink_require_code: "Enter your security code"
   unlink_confirm_button: "✅ Confirm Unlink with Security Code"

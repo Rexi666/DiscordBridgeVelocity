@@ -71,7 +71,7 @@ public class ForceUnlinkListener extends ListenerAdapter {
 
             EmbedBuilder embed = new EmbedBuilder()
                     .setTitle(plugin.getConfig("discord_messages.forceunlink_confirm.title", "⚠️ Confirm Unlink"))
-                    .setColor(plugin.getConfig("discord_messages.forceunlink_confirm.color", 220235200))
+                    .setColor(Integer.parseInt(plugin.getConfig("discord_messages.forceunlink_confirm.color", "DBB000"), 16))
                     .setDescription(plugin.getConfig("discord_messages.forceunlink_confirm.message", "Are you sure you want to unlink the Discord account {userId} from Minecraft player `{username}`?")
                             .replace("{userId}", "<@" + userId + ">")
                             .replace("{username}", minecraftName.get()));
@@ -95,6 +95,12 @@ public class ForceUnlinkListener extends ListenerAdapter {
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
+        String buttonId = event.getButton().getId();
+
+        if (buttonId == null || !buttonId.startsWith("forceunlink_")) {
+            return;
+        }
+
         String[] idParts = event.getButton().getId().split(":");
         if (idParts.length != 2) return;
 
@@ -105,15 +111,49 @@ public class ForceUnlinkListener extends ListenerAdapter {
             Optional<String> minecraftName = plugin.getDatabase().getMinecraftName(userId);
             if (minecraftName.isPresent()) {
                 plugin.getDatabase().unlinkUser(userId);
-                event.editMessage(plugin.getConfig("discord_messages.forceunlink_confirm.message_successful", "✅ Successfully unlinked Discord account {userId} from Minecraft player `{username}`.")
+                UnlinkDiscord(userId);
+                event.reply(plugin.getConfig("discord_messages.forceunlink_confirm.message_successful", "✅ Successfully unlinked Discord account {userId} from Minecraft player `{username}`.")
                         .replace("{userId}", "<@" + userId + ">")
-                        .replace("{username}", minecraftName.get())).setComponents().queue();
+                        .replace("{username}", minecraftName.get())).setEphemeral(true).queue();
             } else {
-                event.editMessage(plugin.getConfig("discord_messages.forceunlink_no_linked", "⚠\uFE0F User `{discordTag}` is not linked.")
-                        .replace("{discordTag}", "<@" + userId + ">")).setComponents().queue();
+                event.reply(plugin.getConfig("discord_messages.forceunlink_no_linked", "⚠\uFE0F User `{discordTag}` is not linked.")
+                        .replace("{discordTag}", "<@" + userId + ">")).setEphemeral(true).queue();
             }
         } else if (action.equals("forceunlink_no")) {
-            event.editMessage(plugin.getConfig("discord_messages.forceunlink_confirm.message_cancelled", "❌ Unlinking process cancelled.")).setComponents().queue();
+            event.reply(plugin.getConfig("discord_messages.forceunlink_confirm.message_cancelled", "❌ Unlinking process cancelled.")).setEphemeral(true).queue();
+        }
+    }
+
+    private void UnlinkDiscord(String discordId) {
+        String guildId = plugin.getConfig("link.guild-id", "123456789123456789");
+        boolean changeName = plugin.getConfig("link.change_discord_name", false);
+        boolean giveRole = plugin.getConfig("link.give_role.enabled", false);
+
+        if (!guildId.equals("123456789123456789") && changeName) {
+            plugin.getJDA().getGuildById(guildId).retrieveMemberById(discordId)
+                    .queue(member -> {
+                        if (member.getGuild().getSelfMember().canInteract(member)) {
+                            member.modifyNickname(null).queue();
+                        } else {
+                            plugin.logger.warn("Error trying to change name: Player has higher role: "+discordId);
+                        }
+                    }, error -> {
+                        plugin.logger.error("Member couldnt be found: " + error.getMessage());
+                    });
+        }
+
+        if (!guildId.equals("123456789123456789") && giveRole) {
+            String role = plugin.getConfig("link.give_role.role_id", "123456789123456789");
+            plugin.getJDA().getGuildById(guildId).retrieveMemberById(discordId)
+                    .queue(member -> {
+                        if (member.getGuild().getSelfMember().canInteract(member)) {
+                            member.getGuild().removeRoleFromMember(member, member.getGuild().getRoleById(role)).queue();
+                        } else {
+                            plugin.logger.warn("Error trying to change role: Player has higher role: "+discordId);
+                        }
+                    }, error -> {
+                        plugin.logger.error("Member couldnt be found: " + error.getMessage());
+                    });
         }
     }
 }

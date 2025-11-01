@@ -5,7 +5,6 @@ import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.exceptions.HierarchyException;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.rexi.discordBridgeVelocity.DiscordBridgeVelocity;
@@ -68,22 +67,13 @@ public class LinkCommand implements SimpleCommand {
         String title = plugin.getConfig("discord_messages.link-successfully.title", "🔗 Link Your Account");
         List<String> description = plugin.getConfig("discord_messages.link-successfully.message", descriptionfallback);
 
-        Object rawColor = plugin.getConfig("discord_messages.info-not-linked.color", 214000203);
-        int color;
-
-        if (rawColor instanceof Number) {
-            color = ((Number) rawColor).intValue();
-        } else {
-            color = Integer.parseInt(rawColor.toString());
-        }
-
         Optional<String> recovery_code_raw = plugin.getDatabase().getRecoveryCode(player.getUniqueId().toString());
         String recovery_code = recovery_code_raw.orElse("N/A");
 
         MessageEmbed embed = new EmbedBuilder()
                 .setTitle(title)
                 .setDescription(String.join("\n", description).replace("{username}", player.getUsername()).replace("{recovery_code}", recovery_code))
-                .setColor(color)
+                .setColor(Integer.parseInt(plugin.getConfig("discord_messages.link-successfully.color", "08C702"), 16))
                 .build();
 
         plugin.getJDA().retrieveUserById(discordId)

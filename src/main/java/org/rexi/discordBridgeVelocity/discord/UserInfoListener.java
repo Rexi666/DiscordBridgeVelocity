@@ -79,7 +79,7 @@ public class UserInfoListener extends ListenerAdapter {
                 EmbedBuilder embed = new EmbedBuilder()
                         .setTitle(plugin.getConfig("discord_messages.userinfo.title", "👤 User Information"))
                         .setThumbnail(user.getEffectiveAvatarUrl())
-                        .setColor(plugin.getConfig("discord_messages.userinfo.color", 214000203))
+                        .setColor(Integer.parseInt(plugin.getConfig("discord_messages.userinfo.color", "D600CB"), 16))
                         .setDescription(String.join("\n", plugin.getConfig("discord_messages.userinfo.message", descriptionfallback))
                                 .replace("{discord_tag}", "<@"+userId+">")
                                 .replace("{discord_id}", userId)
@@ -102,7 +102,7 @@ public class UserInfoListener extends ListenerAdapter {
                 EmbedBuilder embed = new EmbedBuilder()
                         .setTitle(plugin.getConfig("discord_messages.userinfo_no_linked.title", "👤 User Information"))
                         .setThumbnail(user.getEffectiveAvatarUrl())
-                        .setColor(plugin.getConfig("discord_messages.userinfo_no_linked.color", 250000000))
+                        .setColor(Integer.parseInt(plugin.getConfig("discord_messages.userinfo_no_linked.color", "FA0000"), 16))
                         .setDescription(String.join("\n", plugin.getConfig("discord_messages.userinfo_no_linked.message", descriptionfallback))
                                 .replace("{discord_tag}", "<@"+userId+">")
                                 .replace("{discord_id}", userId));

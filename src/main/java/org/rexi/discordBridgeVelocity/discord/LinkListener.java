@@ -27,19 +27,10 @@ public class LinkListener extends ListenerAdapter {
             String titleError = plugin.getConfig("discord_messages.already-linked.title", "⚠\uFE0F Account Already Linked");
             String descriptionError = plugin.getConfig("discord_messages.already-linked.message", "Your Discord account is already linked with an in-game account: {username}");
 
-            Object rawColor = plugin.getConfig("discord_messages.already-linked.color", "250000000");
-            int colorError;
-
-            if (rawColor instanceof Number) {
-                colorError = ((Number) rawColor).intValue();
-            } else {
-                colorError = Integer.parseInt(rawColor.toString());
-            }
-
             MessageEmbed errorEmbed = new EmbedBuilder()
                     .setTitle(titleError)
                     .setDescription(descriptionError.replace("{username}", plugin.getDatabase().getMinecraftName(userId).orElse("Unknown")))
-                    .setColor(colorError)
+                    .setColor(Integer.parseInt(plugin.getConfig("discord_messages.already-linked.color", "FA0000"), 16))
                     .build();
 
             event.replyEmbeds(errorEmbed).setEphemeral(true).queue();
@@ -58,19 +49,10 @@ public class LinkListener extends ListenerAdapter {
         String title = plugin.getConfig("discord_messages.link-message.title", "🔗 Link Your Account");
         List<String> description = plugin.getConfig("discord_messages.link-message.message", descriptionfallback);
 
-        Object rawColor = plugin.getConfig("discord_messages.link-message.color", 214000203);
-        int color;
-
-        if (rawColor instanceof Number) {
-            color = ((Number) rawColor).intValue();
-        } else {
-            color = Integer.parseInt(rawColor.toString());
-        }
-
         MessageEmbed embed = new EmbedBuilder()
                 .setTitle(title)
                 .setDescription(String.join("\n", description).replace("{code}", code))
-                .setColor(color)
+                .setColor(Integer.parseInt(plugin.getConfig("discord_messages.link-message.color", "D600CB"), 16))
                 .build();
 
         plugin.getJDA().retrieveUserById(userId)
@@ -85,19 +67,10 @@ public class LinkListener extends ListenerAdapter {
                             String titleError = plugin.getConfig("discord_messages.dm-error.title", "⚠\uFE0F Unable to send DM");
                             String descriptionError = plugin.getConfig("discord_messages.dm-error.message", "Please, enable your DMs to receive messages from the bot.");
 
-                            Object rawColorError = plugin.getConfig("discord_messages.dm-error.color", 250000000);
-                            int colorError;
-
-                            if (rawColorError instanceof Number) {
-                                colorError = ((Number) rawColorError).intValue();
-                            } else {
-                                colorError = Integer.parseInt(rawColorError.toString());
-                            }
-
                             MessageEmbed errorEmbed = new EmbedBuilder()
                                     .setTitle(titleError)
                                     .setDescription(descriptionError)
-                                    .setColor(colorError)
+                                    .setColor(Integer.parseInt(plugin.getConfig("discord_messages.dm-error.color", "FA0000"), 16))
                                     .build();
 
                             event.replyEmbeds(errorEmbed).setEphemeral(true).queue();
