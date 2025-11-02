@@ -153,6 +153,7 @@ public class DiscordBridgeVelocity {
                     .addEventListeners(new UserInfoListener(this))
                     .addEventListeners(new ForceUnlinkListener(this))
                     .addEventListeners(new UnlinkListener(this))
+                    .addEventListeners(new GetPlayerListener(this))
                     .setAutoReconnect(true)
                     .build();
 
@@ -165,7 +166,9 @@ public class DiscordBridgeVelocity {
                     Commands.slash("userinfo", "Shows user information")
                             .addOption(OptionType.STRING, "user", "ID or mention", true),
                     Commands.slash("forceunlink", "Unlinks account for other players")
-                            .addOption(OptionType.STRING, "user", "ID or mention", true)
+                            .addOption(OptionType.STRING, "user", "ID or mention", true),
+                    Commands.slash("getplayer", "Gets Links information for a Minecraft Player")
+                            .addOption(OptionType.STRING, "name", "Minecraft Name", true)
             ).queue();
 
             jda.getGuildById("956988393647124510")
@@ -177,7 +180,9 @@ public class DiscordBridgeVelocity {
                             Commands.slash("userinfo", "Shows user information")
                                     .addOption(OptionType.STRING, "user", "ID or mention", true),
                             Commands.slash("forceunlink", "Unlinks account for other players")
-                                    .addOption(OptionType.STRING, "user", "ID or mention", true)
+                                    .addOption(OptionType.STRING, "user", "ID or mention", true),
+                            Commands.slash("getplayer", "Gets Links information for a Minecraft Player")
+                                    .addOption(OptionType.STRING, "name", "Minecraft Name", true)
                     ).queue();
 
             logger.info("✅ Discord bot initialized: " + jda.getSelfUser().getName());

@@ -147,27 +147,19 @@ public class ForceUnlinkListener extends ListenerAdapter {
         boolean changeName = plugin.getConfig("link.change_discord_name", false);
         boolean giveRole = plugin.getConfig("link.give_role.enabled", false);
 
-        if (!guildId.equals("123456789123456789") && changeName) {
+        if (!guildId.equals("123456789123456789") && (changeName || giveRole)) {
             plugin.getJDA().getGuildById(guildId).retrieveMemberById(discordId)
                     .queue(member -> {
                         if (member.getGuild().getSelfMember().canInteract(member)) {
-                            member.modifyNickname(null).queue();
+                            if (changeName) {
+                                member.modifyNickname(null).queue();
+                            }
+                            if (giveRole) {
+                                String role = plugin.getConfig("link.give_role.role_id", "123456789123456789");
+                                member.getGuild().removeRoleFromMember(member, member.getGuild().getRoleById(role)).queue();
+                            }
                         } else {
-                            plugin.logger.warn("Error trying to change name: Player has higher role: "+discordId);
-                        }
-                    }, error -> {
-                        plugin.logger.error("Member couldnt be found: " + error.getMessage());
-                    });
-        }
-
-        if (!guildId.equals("123456789123456789") && giveRole) {
-            String role = plugin.getConfig("link.give_role.role_id", "123456789123456789");
-            plugin.getJDA().getGuildById(guildId).retrieveMemberById(discordId)
-                    .queue(member -> {
-                        if (member.getGuild().getSelfMember().canInteract(member)) {
-                            member.getGuild().removeRoleFromMember(member, member.getGuild().getRoleById(role)).queue();
-                        } else {
-                            plugin.logger.warn("Error trying to change role: Player has higher role: "+discordId);
+                            plugin.logger.warn("Error trying to modify user appearance: Player has higher role: "+discordId);
                         }
                     }, error -> {
                         plugin.logger.error("Member couldnt be found: " + error.getMessage());

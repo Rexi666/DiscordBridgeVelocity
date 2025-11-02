@@ -97,12 +97,16 @@ public class DBManager {
         return Optional.empty();
     }
 
-    public Optional<String> getMinecraftUUID(String discordId) {
-        String sql = "SELECT minecraft_uuid FROM discord_links WHERE discord_id = ?";
+    public Optional<String> getMinecraftUUID(String identifier) {
+        String sql = "SELECT minecraft_uuid FROM discord_links WHERE discord_id = ? OR minecraft_name = ? OR minecraft_uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, discordId);
+            stmt.setString(1, identifier);
+            stmt.setString(2, identifier);
+            stmt.setString(3, identifier);
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) return Optional.of(rs.getString("minecraft_uuid"));
+            if (rs.next()) {
+                return Optional.ofNullable(rs.getString("minecraft_uuid"));
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }

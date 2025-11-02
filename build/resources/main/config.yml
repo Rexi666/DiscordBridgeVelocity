@@ -115,6 +115,18 @@ discord_messages:
       - "**Your Minecraft account has been unlinked from your Discord account.**"
       - ""
       - "If you wish to link again, use `/link`"
+  getplayer:
+    title: "🎮 Player Information"
+    color: D600CB
+    message:
+      - "**Player Information:**"
+      - ""
+      - "In-Game Username: `{username}`"
+      - "In-Game UUID: `{uuid}`"
+      - "Linked Discord: {discord_tag}"
+      - "Discord ID: `{discord_id}`"
+      - "Link Date: {link_date}"
+      - "Recovery Code: `{recovery_code}`"
   only_server: "❌ This command can only be used on a server."
   no_permission: "🚫 You dont have permission to use that command."
   userinfo_usage: "Usage: `/userinfo <id or mention>`"
@@ -129,6 +141,8 @@ discord_messages:
   unlink_require_code: "Enter your security code"
   unlink_confirm_button: "✅ Confirm Unlink with Security Code"
   unlink_confirming: "🔒 Please complete the security check..."
+  getplayer_usage: "Usage: `/getplayer <MinecraftName>`"
+  getplayer_no_linked: "❌ Minecraft player `{player}` is not linked."
   button_yes: "✅ Yes"
   button_no: "❌ No"
 
