@@ -3,6 +3,7 @@ package org.rexi.discordBridgeVelocity.discord;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -125,6 +126,23 @@ public class ForceUnlinkListener extends ListenerAdapter {
     }
 
     private void UnlinkDiscord(String discordId) {
+        List<String> descriptionfallback = List.of(
+                "**Your Minecraft account has been unlinked from your Discord account.**",
+                "",
+                "If you wish to link again, use `/link`"
+        );
+
+        MessageEmbed embed = new EmbedBuilder()
+                .setTitle(plugin.getConfig("discord_messages.dm-unlinked.title", "✅ Account Unlinked"))
+                .setDescription(String.join("\n", plugin.getConfig("discord_messages.dm-unlinked.message", descriptionfallback)))
+                .setColor(Integer.parseInt(plugin.getConfig("discord_messages.dm-unlinked.color", "08C702"), 16))
+                .build();
+
+        plugin.getJDA().retrieveUserById(discordId)
+                .flatMap(user -> user.openPrivateChannel())
+                .flatMap(channel -> channel.sendMessageEmbeds(embed))
+                .queue();
+
         String guildId = plugin.getConfig("link.guild-id", "123456789123456789");
         boolean changeName = plugin.getConfig("link.change_discord_name", false);
         boolean giveRole = plugin.getConfig("link.give_role.enabled", false);

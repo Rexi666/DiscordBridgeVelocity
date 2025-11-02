@@ -108,6 +108,13 @@ discord_messages:
     title: "⚠️ Confirm Unlink"
     color: DBB000
     message: "Are you sure you want to unlink your Minecraft account `{username}`?"
+  dm-unlinked:
+    title: "✅ Account Unlinked"
+    color: 08C702
+    message:
+      - "**Your Minecraft account has been unlinked from your Discord account.**"
+      - ""
+      - "If you wish to link again, use `/link`"
   only_server: "❌ This command can only be used on a server."
   no_permission: "🚫 You dont have permission to use that command."
   userinfo_usage: "Usage: `/userinfo <id or mention>`"
