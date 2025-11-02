@@ -32,6 +32,15 @@ admin_commands:
     - "123456789123456789" # Replace with your admin role IDs
     - "987654321987654321"
 
+messaging:
+  enabled: false
+  litebans: false # Enable it to prevent banned/muted players from sending messages. Requires litebans to be installed
+  channels:
+    survival:
+      channel_id: "123456789123456789" # Channel ID for survival server messages
+    skywars:
+      channel_id: "987654321987654321" # Channel ID for skywars server messages
+
 discord_messages:
   link-message:
     title: "🔗 Link Your Account"
@@ -143,6 +152,8 @@ discord_messages:
   unlink_confirming: "🔒 Please complete the security check..."
   getplayer_usage: "Usage: `/getplayer <MinecraftName>`"
   getplayer_no_linked: "❌ Minecraft player `{player}` is not linked."
+  messaging_no_linked: "❌ Link your minecraft account to send messages on this channel."
+  messaging_litebans_banned_or_muted: "❌ You have an active punish ingame, you cannot talk."
   button_yes: "✅ Yes"
   button_no: "❌ No"
 

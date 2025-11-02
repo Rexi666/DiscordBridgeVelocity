@@ -35,6 +35,7 @@ public class DiscordBridgeCommand implements SimpleCommand {
 
             plugin.shutdownBot();
             plugin.loadConfig();
+            plugin.loadLinkedChannels();
             plugin.initializeBot();
 
             source.sendMessage(Component.text("✅ Discord Bridge reloaded correctly.").color(NamedTextColor.GREEN));

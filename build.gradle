@@ -15,6 +15,10 @@ repositories {
         name = "papermc-repo"
         url = "https://repo.papermc.io/repository/maven-public/"
     }
+    maven {
+        name = "litebans"
+        url = "https://jitpack.io"
+    }
 }
 
 dependencies {
@@ -23,6 +27,7 @@ dependencies {
     implementation('net.dv8tion:JDA:5.1.0')
     implementation 'org.xerial:sqlite-jdbc:3.50.3.0'
     implementation 'com.mysql:mysql-connector-j:9.0.0'
+    compileOnly("com.gitlab.ruany:LiteBansAPI:0.6.1")
 }
 
 shadowJar {

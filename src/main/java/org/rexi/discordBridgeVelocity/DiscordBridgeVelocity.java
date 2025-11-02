@@ -13,11 +13,14 @@ import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.rexi.discordBridgeVelocity.commands.DiscordBridgeCommand;
 import org.rexi.discordBridgeVelocity.commands.LinkCommand;
-import org.rexi.discordBridgeVelocity.discord.*;
+import org.rexi.discordBridgeVelocity.discord.DiscordChatListener;
+import org.rexi.discordBridgeVelocity.discord.commands.*;
 import org.rexi.discordBridgeVelocity.utils.DBManager;
 import org.slf4j.Logger;
 import org.yaml.snakeyaml.Yaml;
@@ -26,6 +29,7 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,6 +42,7 @@ public class DiscordBridgeVelocity {
     private DBManager dbManager;
 
     private Map<String, String> configValues = new HashMap<>();
+    private final Map<String, String> linkedChannels = new HashMap<>();
     @Inject
     public DiscordBridgeVelocity(ProxyServer server, @DataDirectory Path dataDirectory) {
         this.server = server;
@@ -50,6 +55,7 @@ public class DiscordBridgeVelocity {
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
         loadConfig();
+        loadLinkedChannels();
         initializeDatabase();
         initializeBot();
 
@@ -145,15 +151,30 @@ public class DiscordBridgeVelocity {
                 }
             }
 
-            jda = JDABuilder.createDefault(token)
+            jda = JDABuilder.createDefault(token,
+                            EnumSet.of(
+                                    GatewayIntent.GUILD_MESSAGES,
+                                    GatewayIntent.DIRECT_MESSAGES,
+                                    GatewayIntent.MESSAGE_CONTENT, // 🔹 necesario para leer el texto de los mensajes
+                                    GatewayIntent.GUILD_MEMBERS    // 🔹 si usas información de miembros (roles, nombres, etc.)
+                            ))
                     .setActivity(activity)
                     .setStatus(status)
-                    .addEventListeners(new LinkListener(this))
-                    .addEventListeners(new InfoListener(this))
-                    .addEventListeners(new UserInfoListener(this))
-                    .addEventListeners(new ForceUnlinkListener(this))
-                    .addEventListeners(new UnlinkListener(this))
-                    .addEventListeners(new GetPlayerListener(this))
+                    .addEventListeners(
+                            new LinkListener(this),
+                            new InfoListener(this),
+                            new UserInfoListener(this),
+                            new ForceUnlinkListener(this),
+                            new UnlinkListener(this),
+                            new GetPlayerListener(this),
+                            new DiscordChatListener(this)
+                    )
+                    .disableCache(
+                            CacheFlag.VOICE_STATE,
+                            CacheFlag.EMOJI,
+                            CacheFlag.STICKER,
+                            CacheFlag.SCHEDULED_EVENTS
+                    )
                     .setAutoReconnect(true)
                     .build();
 
@@ -190,6 +211,12 @@ public class DiscordBridgeVelocity {
         } catch (Exception e) {
             logger.error("Error trying to initialize discord bot:", e);
         }
+    }
+
+    public void sendBroadcastToServer(String serverName, String message) {
+        server.getServer(serverName).ifPresent(server ->
+                server.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(message))
+        );
     }
 
     public void shutdownBot() {
@@ -248,6 +275,24 @@ public class DiscordBridgeVelocity {
         } catch (IOException e) {
             logger.error("Error trying to read or create config.yml", e);
         }
+    }
+
+    public void loadLinkedChannels() {
+        linkedChannels.clear();
+        if (!getConfig("messaging.enabled", false)) return;
+        Map<String, Map<String, Object>> messaging = getConfig("messaging.channels", Map.of());
+        for (Map.Entry<String, Map<String, Object>> entry : messaging.entrySet()) {
+            String serverName = entry.getKey();
+            Object idObj = entry.getValue().get("channel_id");
+            if (idObj != null && (idObj != "123456789123456789" && idObj != "987654321987654321")) {
+                linkedChannels.put(String.valueOf(idObj), serverName);
+            }
+        }
+        logger.info("Loaded " + linkedChannels.size() + " linked Discord channels.");
+    }
+
+    public Map<String, String> getLinkedChannels() {
+        return linkedChannels;
     }
 
     public static final LegacyComponentSerializer LEGACY_HEX_SERIALIZER = LegacyComponentSerializer.builder()
