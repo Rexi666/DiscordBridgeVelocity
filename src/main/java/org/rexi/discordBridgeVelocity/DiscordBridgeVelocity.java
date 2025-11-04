@@ -68,13 +68,14 @@ public class DiscordBridgeVelocity {
         loadLinkedChannels();
         loadLinkedRanks();
         initializeDatabase();
-        initializeBot();
 
         try {
             this.luckPerms = LuckPermsProvider.get();
         } catch (IllegalStateException e) {
             this.luckPerms = null;
         }
+
+        initializeBot();
 
         server.getCommandManager().register("discordbridge", new DiscordBridgeCommand(this));
         server.getCommandManager().register("link", new LinkCommand(this, luckPerms));
@@ -186,7 +187,8 @@ public class DiscordBridgeVelocity {
                             new ForceUnlinkListener(this),
                             new UnlinkListener(this),
                             new GetPlayerListener(this),
-                            new DiscordChatListener(this)
+                            new DiscordChatListener(this),
+                            new ReloadRanksListener(this, luckPerms)
                     )
                     .disableCache(
                             CacheFlag.VOICE_STATE,
@@ -203,6 +205,7 @@ public class DiscordBridgeVelocity {
                     Commands.slash("link", "Link your Discord account with Minecraft"),
                     Commands.slash("info", "Get information about your linked account"),
                     Commands.slash("unlink", "Unlinks your account"),
+                    Commands.slash("reloadranks", "Reloads your linked ranks"),
                     Commands.slash("userinfo", "Shows user information")
                             .addOption(OptionType.STRING, "user", "ID or mention", true),
                     Commands.slash("forceunlink", "Unlinks account for other players")
@@ -210,20 +213,6 @@ public class DiscordBridgeVelocity {
                     Commands.slash("getplayer", "Gets Links information for a Minecraft Player")
                             .addOption(OptionType.STRING, "name", "Minecraft Name", true)
             ).queue();
-
-            jda.getGuildById("956988393647124510")
-                    .updateCommands()
-                    .addCommands(
-                            Commands.slash("link", "Link your Discord account with Minecraft"),
-                            Commands.slash("info", "Get information about your linked account"),
-                            Commands.slash("unlink", "Unlinks your account"),
-                            Commands.slash("userinfo", "Shows user information")
-                                    .addOption(OptionType.STRING, "user", "ID or mention", true),
-                            Commands.slash("forceunlink", "Unlinks account for other players")
-                                    .addOption(OptionType.STRING, "user", "ID or mention", true),
-                            Commands.slash("getplayer", "Gets Links information for a Minecraft Player")
-                                    .addOption(OptionType.STRING, "name", "Minecraft Name", true)
-                    ).queue();
 
             logger.info("✅ Discord bot initialized: " + jda.getSelfUser().getName());
 

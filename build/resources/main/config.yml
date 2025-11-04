@@ -161,6 +161,11 @@ discord_messages:
   getplayer_no_linked: "❌ Minecraft player `{player}` is not linked."
   messaging_no_linked: "❌ Link your minecraft account to send messages on this channel."
   messaging_litebans_banned_or_muted: "❌ You have an active punish ingame, you cannot talk."
+  reloadranks_disabled: "❌ The LuckPerms integration is disabled"
+  reloadranks_error: "❌ Error: Trying to update your rank."
+  reloadranks_current: "❌ You have your current rank already."
+  reloadranks_success: "✅ Your Discord roles have been updated according to your in-game rank."
+  reloadranks_no_role: "❌ No Discord role is set for your in-game rank."
   button_yes: "✅ Yes"
   button_no: "❌ No"
 
