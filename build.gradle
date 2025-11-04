@@ -29,6 +29,7 @@ dependencies {
     implementation 'com.mysql:mysql-connector-j:9.0.0'
     compileOnly("com.gitlab.ruany:LiteBansAPI:0.6.1")
     compileOnly 'net.luckperms:api:5.4'
+    implementation 'org.bstats:bstats-velocity:3.0.0'
 }
 
 shadowJar {
@@ -36,6 +37,7 @@ shadowJar {
     relocate 'net.dv8tion.jda', 'org.rexi.shaded.jda'
     relocate 'okhttp3', 'org.rexi.shaded.okhttp3'
     relocate 'org.json', 'org.rexi.shaded.json'
+    relocate 'org.bstats', 'com.rexi.shaded.lib.bstats'
     mergeServiceFiles()
 }
 

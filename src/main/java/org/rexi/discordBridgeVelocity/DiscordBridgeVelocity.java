@@ -20,6 +20,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
+import org.bstats.velocity.Metrics;
 import org.rexi.discordBridgeVelocity.commands.DiscordBridgeCommand;
 import org.rexi.discordBridgeVelocity.commands.LinkCommand;
 import org.rexi.discordBridgeVelocity.discord.DiscordChatListener;
@@ -58,8 +59,8 @@ public class DiscordBridgeVelocity {
         this.dataDirectory = dataDirectory;
     }
 
-    @Inject
-    public Logger logger;
+    @Inject public Logger logger;
+    @Inject private Metrics.Factory metricsFactory;
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
@@ -77,6 +78,8 @@ public class DiscordBridgeVelocity {
 
         server.getCommandManager().register("discordbridge", new DiscordBridgeCommand(this));
         server.getCommandManager().register("link", new LinkCommand(this, luckPerms));
+
+        Metrics metrics = metricsFactory.make(this, 27858);
 
         server.sendMessage(legacy("&aThe plugin DiscordBridgeVelocity has been enabled!"));
         server.sendMessage(legacy("&bThank you for using Rexi666 plugins :D"));
