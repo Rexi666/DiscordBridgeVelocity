@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
+import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -17,6 +18,8 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
 import org.rexi.discordBridgeVelocity.commands.DiscordBridgeCommand;
 import org.rexi.discordBridgeVelocity.commands.LinkCommand;
 import org.rexi.discordBridgeVelocity.discord.DiscordChatListener;
@@ -29,20 +32,26 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-@Plugin(id = "discord_bridge_velocity", name = "Discord Bridge Velocity", version = BuildConstants.VERSION, authors = {"Rexi666"})
+@Plugin(
+        id = "discord_bridge_velocity",
+        name = "Discord Bridge Velocity",
+        version = BuildConstants.VERSION,
+        authors = {"Rexi666"},
+        dependencies = {@Dependency(id = "luckperms", optional = true), @Dependency(id = "litebans", optional = true)})
 public class DiscordBridgeVelocity {
 
     private final ProxyServer server;
     private JDA jda;
     private final Path dataDirectory;
     private DBManager dbManager;
+    private LuckPerms luckPerms = null;
 
     private Map<String, String> configValues = new HashMap<>();
     private final Map<String, String> linkedChannels = new HashMap<>();
+    private final Map<String, String> linkedRanks = new HashMap<>();
+    private final List<String> allRanks = new ArrayList<>();
     @Inject
     public DiscordBridgeVelocity(ProxyServer server, @DataDirectory Path dataDirectory) {
         this.server = server;
@@ -56,11 +65,18 @@ public class DiscordBridgeVelocity {
     public void onProxyInitialization(ProxyInitializeEvent event) {
         loadConfig();
         loadLinkedChannels();
+        loadLinkedRanks();
         initializeDatabase();
         initializeBot();
 
+        try {
+            this.luckPerms = LuckPermsProvider.get();
+        } catch (IllegalStateException e) {
+            this.luckPerms = null;
+        }
+
         server.getCommandManager().register("discordbridge", new DiscordBridgeCommand(this));
-        server.getCommandManager().register("link", new LinkCommand(this));
+        server.getCommandManager().register("link", new LinkCommand(this, luckPerms));
 
         server.sendMessage(legacy("&aThe plugin DiscordBridgeVelocity has been enabled!"));
         server.sendMessage(legacy("&bThank you for using Rexi666 plugins :D"));
@@ -293,6 +309,29 @@ public class DiscordBridgeVelocity {
 
     public Map<String, String> getLinkedChannels() {
         return linkedChannels;
+    }
+
+    public void loadLinkedRanks() {
+        linkedRanks.clear();
+        allRanks.clear();
+        if (!getConfig("link.luckperms.enabled", false)) return;
+        Map<String, Map<String, Object>> messaging = getConfig("link.luckperms.roles", Map.of());
+        for (Map.Entry<String, Map<String, Object>> entry : messaging.entrySet()) {
+            String rankName = entry.getKey();
+            Object idObj = entry.getValue().get("discord_role");
+            if (idObj != null && (idObj != "123456789123456789" && idObj != "987654321987654321")) {
+                linkedRanks.put(String.valueOf(idObj), rankName);
+                allRanks.add(String.valueOf(idObj));
+            }
+        }
+        logger.info("Loaded " + linkedRanks.size() + " linked Ranks.");
+    }
+
+    public Map<String, String> getLinkedRanks() {
+        return linkedRanks;
+    }
+    public List<String> getAllRanks() {
+        return allRanks;
     }
 
     public static final LegacyComponentSerializer LEGACY_HEX_SERIALIZER = LegacyComponentSerializer.builder()

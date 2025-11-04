@@ -1,5 +1,6 @@
 package org.rexi.discordBridgeVelocity.discord.commands;
 
+import com.velocitypowered.api.proxy.Player;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -172,8 +173,9 @@ public class UnlinkListener extends ListenerAdapter {
         String guildId = plugin.getConfig("link.guild-id", "123456789123456789");
         boolean changeName = plugin.getConfig("link.change_discord_name", false);
         boolean giveRole = plugin.getConfig("link.give_role.enabled", false);
+        boolean useLuckperms = plugin.getConfig("link.luckperms.enabled", false);
 
-        if (!guildId.equals("123456789123456789") && (changeName || giveRole)) {
+        if (!guildId.equals("123456789123456789") && (changeName || giveRole || useLuckperms)) {
             plugin.getJDA().getGuildById(guildId).retrieveMemberById(discordId)
                     .queue(member -> {
                         if (member.getGuild().getSelfMember().canInteract(member)) {
@@ -183,6 +185,13 @@ public class UnlinkListener extends ListenerAdapter {
                             if (giveRole) {
                                 String role = plugin.getConfig("link.give_role.role_id", "123456789123456789");
                                 member.getGuild().removeRoleFromMember(member, member.getGuild().getRoleById(role)).queue();
+                            }
+                            if (useLuckperms) {
+                                for (String rank : plugin.getAllRanks()) {
+                                    if (rank != null) {
+                                        member.getGuild().removeRoleFromMember(member, member.getGuild().getRoleById(rank)).queue();
+                                    }
+                                }
                             }
                         } else {
                             plugin.logger.warn("Error trying to modify user appearance: Player has higher role: "+discordId);
