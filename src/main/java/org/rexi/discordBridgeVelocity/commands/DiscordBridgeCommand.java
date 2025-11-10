@@ -38,6 +38,7 @@ public class DiscordBridgeCommand implements SimpleCommand {
             plugin.loadLinkedChannels();
             plugin.loadLinkedRanks();
             plugin.initializeBot();
+            plugin.getRankSyncTask().start();
 
             source.sendMessage(Component.text("✅ Discord Bridge reloaded correctly.").color(NamedTextColor.GREEN));
         } else {

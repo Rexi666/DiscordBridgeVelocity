@@ -24,6 +24,7 @@ import org.bstats.velocity.Metrics;
 import org.rexi.discordBridgeVelocity.commands.DiscordBridgeCommand;
 import org.rexi.discordBridgeVelocity.commands.LinkCommand;
 import org.rexi.discordBridgeVelocity.discord.DiscordChatListener;
+import org.rexi.discordBridgeVelocity.discord.RankSyncTask;
 import org.rexi.discordBridgeVelocity.discord.commands.*;
 import org.rexi.discordBridgeVelocity.utils.DBManager;
 import org.slf4j.Logger;
@@ -48,6 +49,7 @@ public class DiscordBridgeVelocity {
     private final Path dataDirectory;
     private DBManager dbManager;
     private LuckPerms luckPerms = null;
+    private RankSyncTask rankSyncTask;
 
     private Map<String, String> configValues = new HashMap<>();
     private final Map<String, String> linkedChannels = new HashMap<>();
@@ -76,6 +78,9 @@ public class DiscordBridgeVelocity {
         }
 
         initializeBot();
+
+        this.rankSyncTask = new RankSyncTask(this, server, luckPerms);
+        this.rankSyncTask.start();
 
         server.getCommandManager().register("discordbridge", new DiscordBridgeCommand(this));
         server.getCommandManager().register("link", new LinkCommand(this, luckPerms));
@@ -112,6 +117,9 @@ public class DiscordBridgeVelocity {
 
     public DBManager getDatabase() {
         return dbManager;
+    }
+    public RankSyncTask getRankSyncTask() {
+        return rankSyncTask;
     }
 
     public void initializeBot() {
@@ -188,7 +196,8 @@ public class DiscordBridgeVelocity {
                             new UnlinkListener(this),
                             new GetPlayerListener(this),
                             new DiscordChatListener(this),
-                            new ReloadRanksListener(this, luckPerms)
+                            new ReloadRanksListener(this, luckPerms),
+                            new SyncRanksListener(this)
                     )
                     .disableCache(
                             CacheFlag.VOICE_STATE,
@@ -206,6 +215,7 @@ public class DiscordBridgeVelocity {
                     Commands.slash("info", "Get information about your linked account"),
                     Commands.slash("unlink", "Unlinks your account"),
                     Commands.slash("reloadranks", "Reloads your linked ranks"),
+                    Commands.slash("syncranks", "Syncs ranks for all linked users"),
                     Commands.slash("userinfo", "Shows user information")
                             .addOption(OptionType.STRING, "user", "ID or mention", true),
                     Commands.slash("forceunlink", "Unlinks account for other players")

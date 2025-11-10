@@ -11,6 +11,7 @@ import net.luckperms.api.model.user.User;
 import net.luckperms.api.model.user.UserManager;
 import org.rexi.discordBridgeVelocity.DiscordBridgeVelocity;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -38,12 +39,13 @@ public class ReloadRanksListener extends ListenerAdapter {
             }
 
             Member executor = event.getMember();
-            String uuidString = plugin.getDatabase().getMinecraftUUID(executor.getId()).get();
-            if (uuidString.isEmpty()) {
+            Optional<String> uuidOptional = plugin.getDatabase().getMinecraftUUID(executor.getId());
+            if (uuidOptional.isEmpty()) {
                 hook.sendMessage(plugin.getConfig("discord_messages.unlink_no_linked", "⚠️ You don't have any linked Minecraft account.")).setEphemeral(true).queue();
                 return;
             }
-            UUID uuid = UUID.fromString(uuidString);
+
+            UUID uuid = UUID.fromString(uuidOptional.get());
             Guild guild = plugin.getJDA().getGuildById(guildId);
             guild.retrieveMemberById(executor.getId()).queue(member -> {
                 getGroup(uuid).thenAccept(rank -> {
@@ -75,6 +77,11 @@ public class ReloadRanksListener extends ListenerAdapter {
                                 }
                             }
                         } else {
+                            for (String roles : plugin.getAllRanks()) {
+                                if (roles != null) {
+                                    guild.removeRoleFromMember(member, guild.getRoleById(roles)).queue();
+                                }
+                            }
                             hook.sendMessage(plugin.getConfig("discord_messages.reloadranks_no_role", "❌ No Discord role is set for your in-game rank.")).setEphemeral(true).queue();
                         }
                     }

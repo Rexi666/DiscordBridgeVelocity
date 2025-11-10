@@ -1,8 +1,7 @@
 package org.rexi.discordBridgeVelocity.utils;
 
 import java.sql.*;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public class DBManager {
 
@@ -160,5 +159,24 @@ public class DBManager {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public List<Map<String, String>> getAllLinkedPlayers() {
+        List<Map<String, String>> linkedPlayers = new ArrayList<>();
+        String sql = "SELECT minecraft_uuid, discord_id FROM discord_links";
+
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Map<String, String> data = new HashMap<>();
+                data.put("uuid", rs.getString("minecraft_uuid"));
+                data.put("discord_id", rs.getString("discord_id"));
+                linkedPlayers.add(data);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return linkedPlayers;
     }
 }

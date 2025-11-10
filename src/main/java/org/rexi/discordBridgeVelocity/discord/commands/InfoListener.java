@@ -57,7 +57,7 @@ public class InfoListener extends ListenerAdapter {
         MessageEmbed errorEmbed = new EmbedBuilder()
                 .setTitle(titleError)
                 .setDescription(String.join("\n", descriptionError).replace("{username}", playerName))
-                .setColor(Integer.parseInt(plugin.getConfig("discord_messages.info.color", "D600CB"), 16))
+                .setColor(Integer.parseInt(plugin.getConfig("discord_messages.info.color", "08C702"), 16))
                 .build();
 
         event.replyEmbeds(errorEmbed).setEphemeral(true).queue();
