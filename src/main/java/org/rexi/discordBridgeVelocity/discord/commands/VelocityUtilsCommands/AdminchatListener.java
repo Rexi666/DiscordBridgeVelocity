@@ -41,7 +41,7 @@ public class AdminchatListener extends ListenerAdapter {
             return;
         }
 
-        if (plugin.getConfig("velocity_utils_commands.enabled", false) && plugin.getConfig("velocity_utils_commands.adminchat.enabled", true)) {
+        if (!plugin.getConfig("velocity_utils_commands.enabled", false) || !plugin.getConfig("velocity_utils_commands.adminchat.enabled", true)) {
             event.reply(plugin.getConfig("discord_messages.velocity_utils_commands_disabled", "❌ This command is disabled")).setEphemeral(true).queue();
             return;
         }
