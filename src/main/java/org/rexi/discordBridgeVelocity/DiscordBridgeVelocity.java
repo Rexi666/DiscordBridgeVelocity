@@ -26,7 +26,10 @@ import org.rexi.discordBridgeVelocity.commands.LinkCommand;
 import org.rexi.discordBridgeVelocity.discord.DiscordChatListener;
 import org.rexi.discordBridgeVelocity.discord.RankSyncTask;
 import org.rexi.discordBridgeVelocity.discord.commands.*;
+import org.rexi.discordBridgeVelocity.discord.commands.VelocityUtilsCommands.*;
 import org.rexi.discordBridgeVelocity.utils.DBManager;
+import org.rexi.velocityUtils.api.VelocityUtilsAPI;
+import org.rexi.velocityUtils.api.VelocityUtilsProvider;
 import org.slf4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
@@ -41,14 +44,17 @@ import java.util.*;
         name = "Discord Bridge Velocity",
         version = BuildConstants.VERSION,
         authors = {"Rexi666"},
-        dependencies = {@Dependency(id = "luckperms", optional = true), @Dependency(id = "litebans", optional = true)})
+        dependencies = {@Dependency(id = "luckperms", optional = true),
+                @Dependency(id = "litebans", optional = true),
+        @Dependency(id = "velocityutils", optional = true)})
 public class DiscordBridgeVelocity {
 
-    private final ProxyServer server;
+    public final ProxyServer server;
     private JDA jda;
     private final Path dataDirectory;
     private DBManager dbManager;
     private LuckPerms luckPerms = null;
+    private VelocityUtilsAPI velocityUtils = null;
     private RankSyncTask rankSyncTask;
 
     private Map<String, String> configValues = new HashMap<>();
@@ -75,6 +81,12 @@ public class DiscordBridgeVelocity {
             this.luckPerms = LuckPermsProvider.get();
         } catch (IllegalStateException e) {
             this.luckPerms = null;
+        }
+
+        try {
+            this.velocityUtils = VelocityUtilsProvider.get();
+        } catch (IllegalStateException e) {
+            this.velocityUtils = null;
         }
 
         initializeBot();
@@ -197,7 +209,12 @@ public class DiscordBridgeVelocity {
                             new GetPlayerListener(this),
                             new DiscordChatListener(this),
                             new ReloadRanksListener(this, luckPerms),
-                            new SyncRanksListener(this)
+                            new SyncRanksListener(this),
+                            new AlertListener(this, velocityUtils),
+                            new StafflistListener(this, velocityUtils),
+                            new VlistListener(this, velocityUtils),
+                            new StaffchatListener(this, velocityUtils),
+                            new AdminchatListener(this, velocityUtils)
                     )
                     .disableCache(
                             CacheFlag.VOICE_STATE,
@@ -221,7 +238,18 @@ public class DiscordBridgeVelocity {
                     Commands.slash("forceunlink", "Unlinks account for other players")
                             .addOption(OptionType.STRING, "user", "ID or mention", true),
                     Commands.slash("getplayer", "Gets Links information for a Minecraft Player")
-                            .addOption(OptionType.STRING, "name", "Minecraft Name", true)
+                            .addOption(OptionType.STRING, "name", "Minecraft Name", true),
+                    // VelocityUtils Commands
+                    Commands.slash("stafflist", "See the list of online staff members"),
+                    Commands.slash("staffchat", "Send a message to the minecraft staff chat")
+                            .addOption(OptionType.STRING, "message", "Message to send", true),
+                    Commands.slash("adminchat", "Send a message to the minecraft admin chat")
+                            .addOption(OptionType.STRING, "message", "Message to send", true),
+                    Commands.slash("vlist", "See the list of online players")
+                            .addOption(OptionType.BOOLEAN, "rank", "Do you want to list by rank?", true),
+                    Commands.slash("alert", "Send alert to the entire network")
+                            .addOption(OptionType.INTEGER, "amount", "Number of times to repeat the alert", true)
+                            .addOption(OptionType.STRING, "message", "Alert message", true)
             ).queue();
 
             logger.info("✅ Discord bot initialized: " + jda.getSelfUser().getName());

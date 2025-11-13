@@ -51,6 +51,19 @@ messaging:
     skywars:
       channel_id: "987654321987654321" # Channel ID for skywars server messages
 
+velocity_utils_commands: # Need to have VelocityUtils plugin installed
+  enabled: false
+  alert: # Admins can use /alert <amount> <message> to send an alert to all players on the velocity network
+    enabled: true
+  stafflist: # Admins can use /stafflist to see online staff members
+    enabled: true
+  vlist: # Admins can use /vlist to see every online player
+    enabled: true
+  staffchat: # Admins can use /staffchat to send a message to the minecraft staff chat. They need to be linked
+    enabled: true
+  adminchat: # Admins can use /adminchat to send a message to the minecraft admin chat. They need to be linked
+    enabled: true
+
 discord_messages:
   link-message:
     title: "🔗 Link Your Account"
@@ -159,6 +172,25 @@ discord_messages:
       title: "✅ Rank synchronization complete!"
       color: 08C702
       message: "All linked users have been updated successfully."
+  stafflist:
+    title: "📋 StaffList"
+    color: 7202C7
+    message:
+      - "**There are a total of {total} staff connected**"
+      - ""
+      - "{staff_list}"
+    staff_list: "- {player} ({rank} - {server})"
+    no_staff: "❌ There are no staff members connected."
+  vlist:
+    title: "📋 vList"
+    color: 7202C7
+    message:
+      - "**There are a total of {total} players connected**"
+      - ""
+      - "{player_list}"
+    player_list: "- {identifier} ({num}) - {players}"
+    no_players: "❌ There are no players connected."
+    usage: "Usage: `/vlist true/false` (true = group by rank, false = group by server)"
   only_server: "❌ This command can only be used on a server."
   no_permission: "🚫 You dont have permission to use that command."
   userinfo_usage: "Usage: `/userinfo <id or mention>`"
@@ -182,6 +214,13 @@ discord_messages:
   reloadranks_current: "❌ You have your current rank already."
   reloadranks_success: "✅ Your Discord roles have been updated according to your in-game rank."
   reloadranks_no_role: "❌ No Discord role is set for your in-game rank."
+  velocity_utils_commands_disabled: "❌ This command is disabled"
+  alert_usage: "Usage: `/alert <amount> <message>`"
+  alert_sent: "✅ Alert sent to all players on the Velocity network."
+  staff_admin_chat_no_linked: "❌ You need to link your account to use that command."
+  staff_admin_chat_sent: "✅ Message sent to the minecraft chat."
+  staff_chat_usage: "Usage: `/staffchat <message>`"
+  admin_chat_usage: "Usage: `/adminchat <message>`"
   button_yes: "✅ Yes"
   button_no: "❌ No"
 

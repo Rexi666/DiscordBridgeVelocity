@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'org.rexi'
-version = '1.0'
+version = '1.1'
 
 repositories {
     mavenCentral()
@@ -19,6 +19,7 @@ repositories {
         name = "litebans"
         url = "https://jitpack.io"
     }
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
@@ -30,6 +31,7 @@ dependencies {
     compileOnly("com.gitlab.ruany:LiteBansAPI:0.6.1")
     compileOnly 'net.luckperms:api:5.4'
     implementation 'org.bstats:bstats-velocity:3.0.0'
+    compileOnly 'com.github.Rexi666:VelocityUtils:3.3.1'
 }
 
 shadowJar {
