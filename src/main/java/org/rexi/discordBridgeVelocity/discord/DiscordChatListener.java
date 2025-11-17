@@ -60,13 +60,14 @@ public class DiscordChatListener extends ListenerAdapter {
 
         String message = event.getMessage().getContentDisplay();
 
-        // Mensaje formateado
-        String formatted = "&9[Discord] &f" + mcName + " &7» &r" + message;
+        String format = plugin.getConfig("messages.messaging", "&9[Discord] &f{player} &7» &r{message}");
 
-        // Enviar broadcast al servidor vinculado (via Velocity)
+        String formatted = format
+                .replace("{player}", mcName)
+                .replace("{message}", message);
+
         plugin.sendBroadcastToServer(serverName, formatted);
 
-        // También podrías registrar el mensaje en logs si lo deseas
         plugin.logger.info("[DiscordChat] (" + serverName + ") " + mcName + ": " + message);
     }
 }

@@ -230,3 +230,4 @@ messages:
   link-error: "&cError linking accounts."
   link-command: "&cUsage: /link <code>. You can get the code in Discord by using /link on any channel."
   already-linked: "&c⚠ Your account is already linked with a Discord account."
+  messaging: "&9[Discord] &f{player} &7» &r{message}"
