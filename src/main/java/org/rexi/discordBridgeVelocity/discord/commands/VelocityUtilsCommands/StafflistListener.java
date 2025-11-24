@@ -76,7 +76,7 @@ public class StafflistListener extends ListenerAdapter {
                     .replace("{server}", server));
         }
 
-        List<String> description = plugin.getConfig("discord_messages.stafflist.title", descriptionFallback);
+        List<String> description = plugin.getConfig("discord_messages.stafflist.message", descriptionFallback);
 
         MessageEmbed embed = new EmbedBuilder()
                 .setTitle(plugin.getConfig("discord_messages.stafflist.title", "📋 StaffList"))

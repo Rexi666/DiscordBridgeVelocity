@@ -82,7 +82,7 @@ public class VlistListener extends ListenerAdapter {
                     .replace("{players}", "`"+String.join("`, `", players)+"`"));
         }
 
-        List<String> description = plugin.getConfig("discord_messages.vlist.title", descriptionFallback);
+        List<String> description = plugin.getConfig("discord_messages.vlist.message", descriptionFallback);
 
         MessageEmbed embed = new EmbedBuilder()
                 .setTitle(plugin.getConfig("discord_messages.vlist.title", "📋 vList"))
