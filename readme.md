@@ -1,11 +1,11 @@
-# ⭐ DiscordBridgeVelocity — The Ultimate Bridge Between Discord, Velocity & Spigot ⭐
+# ⭐ DiscordBridgeVelocity — The Ultimate Bridge Between Discord & Velocity ⭐
 
 **DiscordBridgeVelocity** is the perfect plugin for creating a **stable, modern, and fully customizable** connection between your Velocity proxy and Discord.  
 Easily link your Minecraft network with a powerful Discord bot, enabling account linking, chat synchronization, role syncing, and much more.
 
-✔️ **Velocity** proxy
-✔️ Optional **LuckPerms** integration
-✔️ Optional **Litebans** integration
+✔️ **Velocity** proxy 
+✔️ Optional **LuckPerms** integration 
+✔️ Optional **Litebans** integration 
 ✔️ Optional **VelocityUtils** integration
 
 ---
@@ -76,7 +76,7 @@ Perfect for global chat, staff chat, or community channels.
 ---
 
 ## 💬 Need Help or Support?
-📖 Wiki: https://rexi666-plugins.gitbook.io/rexi666/velocityutils
+📖 Wiki: https://rexi666-plugins.gitbook.io/rexi666/discord-bridge-velocity
 
 Join my Discord server (Spanish/English):
 <p align="center">
