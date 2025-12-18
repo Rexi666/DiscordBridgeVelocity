@@ -1,1 +1,1 @@
-{"id":"discord_bridge_velocity","name":"Discord Bridge Velocity","version":"1.1","authors":["Rexi666"],"dependencies":[{"id":"luckperms","optional":true},{"id":"litebans","optional":true},{"id":"velocityutils","optional":true}],"main":"org.rexi.discordBridgeVelocity.DiscordBridgeVelocity"}
+{"id":"discord_bridge_velocity","name":"Discord Bridge Velocity","version":"1.2","authors":["Rexi666"],"dependencies":[{"id":"luckperms","optional":true},{"id":"litebans","optional":true},{"id":"velocityutils","optional":true}],"main":"org.rexi.discordBridgeVelocity.DiscordBridgeVelocity"}

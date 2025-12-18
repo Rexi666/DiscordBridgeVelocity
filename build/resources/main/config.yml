@@ -32,6 +32,17 @@ link:
         discord_role: "123456789123456789" # Replace with your Discord role ID
       mvp:
         discord_role: "987654321987654321"
+  discord_ranks_rewards:
+    enabled: false
+    daily_hour: 12 # Hour of the day (0-23) to give daily rewards
+    roles:
+      "123456789123456789": # example with Booster role ID
+        received_commands: # command executed when someone receive the discord role
+          - "lpv user {player} parent add booster"
+        removed_commands: # command executed when someone lose the discord role
+          - "lpv user {player} parent remove booster"
+        daily_rewards: # commands executed daily to give rewards
+          - "serverexecute survival eco give {player} 1000" # This is a command from VelocityUtils that runs a command on a specific server (in this example survival)
 
 unlink:
   enabled: true # Can players unlink their accounts?

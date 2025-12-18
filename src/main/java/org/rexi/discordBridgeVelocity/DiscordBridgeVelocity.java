@@ -24,9 +24,11 @@ import org.bstats.velocity.Metrics;
 import org.rexi.discordBridgeVelocity.commands.DiscordBridgeCommand;
 import org.rexi.discordBridgeVelocity.commands.LinkCommand;
 import org.rexi.discordBridgeVelocity.discord.DiscordChatListener;
+import org.rexi.discordBridgeVelocity.discord.DiscordDailyRewardsTask;
 import org.rexi.discordBridgeVelocity.discord.RankSyncTask;
 import org.rexi.discordBridgeVelocity.discord.commands.*;
 import org.rexi.discordBridgeVelocity.discord.commands.VelocityUtilsCommands.*;
+import org.rexi.discordBridgeVelocity.discord.listeners.DiscordRoleRewardsListener;
 import org.rexi.discordBridgeVelocity.utils.DBManager;
 import org.rexi.velocityUtils.api.VelocityUtilsAPI;
 import org.rexi.velocityUtils.api.VelocityUtilsProvider;
@@ -37,7 +39,10 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Plugin(
         id = "discord_bridge_velocity",
@@ -98,6 +103,17 @@ public class DiscordBridgeVelocity {
         server.getCommandManager().register("link", new LinkCommand(this, luckPerms));
 
         Metrics metrics = metricsFactory.make(this, 27858);
+
+        long initialDelay = getInitialDailyRewardDelaySeconds();
+
+        server.getScheduler().buildTask(this,
+                        new DiscordDailyRewardsTask(this)
+                )
+                .delay(initialDelay, TimeUnit.SECONDS)
+                .repeat(24, TimeUnit.HOURS)
+                .schedule();
+
+        logger.info("Discord daily rewards scheduled in " + formatDuration(initialDelay));
 
         server.sendMessage(legacy("&aThe plugin DiscordBridgeVelocity has been enabled!"));
         server.sendMessage(legacy("&bThank you for using Rexi666 plugins :D"));
@@ -214,7 +230,8 @@ public class DiscordBridgeVelocity {
                             new StafflistListener(this, velocityUtils),
                             new VlistListener(this, velocityUtils),
                             new StaffchatListener(this, velocityUtils),
-                            new AdminchatListener(this, velocityUtils)
+                            new AdminchatListener(this, velocityUtils),
+                            new DiscordRoleRewardsListener(this)
                     )
                     .disableCache(
                             CacheFlag.VOICE_STATE,
@@ -363,6 +380,45 @@ public class DiscordBridgeVelocity {
     public List<String> getAllRanks() {
         return allRanks;
     }
+
+    public Map<String, Map<String, List<String>>> getDiscordRankRewards() {
+        return getConfig("link.discord_ranks_rewards.roles", Map.of());
+    }
+
+    public long getInitialDailyRewardDelaySeconds() {
+        int rewardHour = getConfig("link.discord_ranks_rewards.daily_hour", 12);
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime nextRun = now
+                .withHour(rewardHour)
+                .withMinute(1)
+                .withSecond(0);
+
+        if (now.compareTo(nextRun) >= 0) {
+            nextRun = nextRun.plusDays(1);
+        }
+
+        return Duration.between(now, nextRun).getSeconds();
+    }
+
+    public static String formatDuration(long seconds) {
+        long days = seconds / 86400;
+        seconds %= 86400;
+        long hours = seconds / 3600;
+        seconds %= 3600;
+        long minutes = seconds / 60;
+        seconds %= 60;
+
+        StringBuilder sb = new StringBuilder();
+
+        if (days > 0) sb.append(days).append("d ");
+        if (hours > 0) sb.append(hours).append("h ");
+        if (minutes > 0) sb.append(minutes).append("m ");
+        if (seconds > 0 || sb.isEmpty()) sb.append(seconds).append("s");
+
+        return sb.toString().trim();
+    }
+
 
     public static final LegacyComponentSerializer LEGACY_HEX_SERIALIZER = LegacyComponentSerializer.builder()
             .character('&')
