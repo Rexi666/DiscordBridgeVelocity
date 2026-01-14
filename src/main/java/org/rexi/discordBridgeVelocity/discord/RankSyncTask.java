@@ -75,7 +75,13 @@ public class RankSyncTask {
                         var role = guild.getRoleById(roleId);
                         if (role != null) {
                             guild.retrieveMemberById(discordId).queue(member -> {
+                                if (member.getRoles().contains(role)) {
+                                    return;
+                                }
+
                                 plugin.getLinkedRanks().keySet().forEach(oldRoleId -> {
+                                    if (oldRoleId.equals(role.getId())) return;
+
                                     Role oldRole = guild.getRoleById(oldRoleId);
                                     if (oldRole != null && member.getRoles().contains(oldRole)) {
                                         guild.removeRoleFromMember(member, oldRole).queue();
