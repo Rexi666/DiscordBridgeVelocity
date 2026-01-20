@@ -239,6 +239,7 @@ discord_messages:
   staff_admin_chat_sent: "✅ Message sent to the minecraft chat."
   staff_chat_usage: "Usage: `/staffchat <message>`"
   admin_chat_usage: "Usage: `/adminchat <message>`"
+  new_version: "&c⚠ A new version of DiscordBridgeVelocity is available: {version}! Download it from: {url}"
   button_yes: "✅ Yes"
   button_no: "❌ No"
 

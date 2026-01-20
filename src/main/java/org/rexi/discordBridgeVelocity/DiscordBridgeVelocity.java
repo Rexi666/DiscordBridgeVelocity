@@ -1,12 +1,14 @@
 package org.rexi.discordBridgeVelocity;
 
 import com.google.inject.Inject;
+import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -30,6 +32,7 @@ import org.rexi.discordBridgeVelocity.discord.commands.*;
 import org.rexi.discordBridgeVelocity.discord.commands.VelocityUtilsCommands.*;
 import org.rexi.discordBridgeVelocity.discord.listeners.DiscordRoleRewardsListener;
 import org.rexi.discordBridgeVelocity.utils.DBManager;
+import org.rexi.discordBridgeVelocity.utils.UpdateChecker;
 import org.slf4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
@@ -79,6 +82,8 @@ public class DiscordBridgeVelocity {
         loadLinkedChannels();
         loadLinkedRanks();
         initializeDatabase();
+
+        new UpdateChecker(server, this, BuildConstants.VERSION, "https://raw.githubusercontent.com/Rexi666/DiscordBridgeVelocity/main/latest-version.txt").checkForUpdates();
 
         try {
             this.luckPerms = LuckPermsProvider.get();
@@ -453,4 +458,11 @@ public class DiscordBridgeVelocity {
         }
     }
 
+    @Subscribe
+    public void PostLogin(PostLoginEvent event) {
+        Player player = event.getPlayer();
+        if (player.hasPermission("discordbridge.admin")) {
+            new UpdateChecker(server, this, BuildConstants.VERSION, "https://raw.githubusercontent.com/Rexi666/VelocityUtils/main/latest-version.txt").checkForUpdatesPlayer(player);
+        }
+    }
 }
