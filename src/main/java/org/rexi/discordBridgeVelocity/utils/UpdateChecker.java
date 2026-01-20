@@ -36,7 +36,7 @@ public class UpdateChecker {
                 reader.close();
 
                 if (!latestVersion.equalsIgnoreCase(currentVersion)) {
-                    String message = plugin.getConfig("new_version", "&c⚠ A new version of DiscordBridgeVelocity is available: {version}! Download it from: {url}")
+                    String message = plugin.getConfig("messages.new_version", "&c⚠ A new version of DiscordBridgeVelocity is available: {version}! Download it from: {url}")
                             .replace("{version}", latestVersion).replace("{url}", "https://www.spigotmc.org/resources/discordbridgevelocity.130647/");
                     server.getConsoleCommandSource().sendMessage(legacy(message));
                 }
@@ -56,7 +56,7 @@ public class UpdateChecker {
                 reader.close();
 
                 if (!latestVersion.equalsIgnoreCase(currentVersion)) {
-                    String message = plugin.getConfig("new_version", "&c⚠ A new version of DiscordBridgeVelocity is available: {version}! Download it from: {url}")
+                    String message = plugin.getConfig("messages.new_version", "&c⚠ A new version of DiscordBridgeVelocity is available: {version}! Download it from: {url}")
                             .replace("{version}", latestVersion).replace("{url}", "https://www.spigotmc.org/resources/discordbridgevelocity.130647/");
                     Component tpLine = legacy(message)
                             .clickEvent(ClickEvent.openUrl("https://www.spigotmc.org/resources/discordbridgevelocity.130647/"));
