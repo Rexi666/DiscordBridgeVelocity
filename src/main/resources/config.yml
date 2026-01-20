@@ -183,6 +183,13 @@ discord_messages:
       title: "✅ Rank synchronization complete!"
       color: 08C702
       message: "All linked users have been updated successfully."
+  ip:
+    title: "🎮 Server Information"
+    color: D600CB
+    message:
+      - "**IP:** test.example.com"
+      - "**Online Players:** {online_players}"
+      - "**Website:** www.example.com"
   stafflist:
     title: "📋 StaffList"
     color: 7202C7

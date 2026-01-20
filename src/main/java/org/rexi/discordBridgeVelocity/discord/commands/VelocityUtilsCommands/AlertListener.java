@@ -4,16 +4,16 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.rexi.discordBridgeVelocity.DiscordBridgeVelocity;
-import org.rexi.velocityUtils.api.VelocityUtilsAPI;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 public class AlertListener extends ListenerAdapter {
 
     private final DiscordBridgeVelocity plugin;
-    private final VelocityUtilsAPI velocityUtils;
+    private final Object velocityUtils;
 
-    public AlertListener(DiscordBridgeVelocity plugin, VelocityUtilsAPI velocityUtils) {
+    public AlertListener(DiscordBridgeVelocity plugin, Object velocityUtils) {
         this.plugin = plugin;
         this.velocityUtils = velocityUtils;
     }
@@ -21,6 +21,12 @@ public class AlertListener extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         if (!event.getName().equalsIgnoreCase("alert")) return;
+
+        if (velocityUtils == null) {
+            event.reply(plugin.getConfig("discord_messages.velocity_utils_commands_disabled", "❌ This command is disabled"))
+                    .setEphemeral(true).queue();
+            return;
+        }
 
         Member executor = event.getMember();
         if (executor == null) {
@@ -47,18 +53,28 @@ public class AlertListener extends ListenerAdapter {
 
         // Obtener argumento
         String arg = event.getOption("message") != null ? event.getOption("message").getAsString() : null;
-        int amount = event.getOption("amount") != null ? event.getOption("amount").getAsInt() : null;
-        if (arg == null || arg.isEmpty() || amount == 0) {
+        Integer amount = event.getOption("amount") != null
+                ? event.getOption("amount").getAsInt()
+                : null;
+        if (arg == null || arg.isEmpty() || amount == null || amount <= 0) {
             event.reply(plugin.getConfig("discord_messages.alert_usage", "Usage: `/alert <amount> <message>`"))
                     .setEphemeral(true).queue();
             return;
         }
 
-        for (int i = 0; i < amount; i++) {
-            velocityUtils.sendAlert(arg);
-        }
+        try {
+            Method sendAlert = velocityUtils.getClass()
+                    .getMethod("sendAlert", String.class);
+            for (int i = 0; i < amount; i++) {
+                sendAlert.invoke(velocityUtils, arg);
+            }
 
-        event.reply(plugin.getConfig("discord_messages.alert_sent", "✅ Alert sent to all players on the Velocity network."))
-                .setEphemeral(true).queue();
+            event.reply(plugin.getConfig("discord_messages.alert_sent", "✅ Alert sent to all players on the Velocity network."))
+                    .setEphemeral(true).queue();
+        } catch (Exception e) {
+            e.printStackTrace();
+            event.reply(plugin.getConfig("discord_messages.velocity_utils_commands_disabled", "❌ This command is disabled"))
+                    .setEphemeral(true).queue();
+        }
     }
 }

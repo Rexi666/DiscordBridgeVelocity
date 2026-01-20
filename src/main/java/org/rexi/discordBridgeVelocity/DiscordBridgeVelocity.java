@@ -30,8 +30,6 @@ import org.rexi.discordBridgeVelocity.discord.commands.*;
 import org.rexi.discordBridgeVelocity.discord.commands.VelocityUtilsCommands.*;
 import org.rexi.discordBridgeVelocity.discord.listeners.DiscordRoleRewardsListener;
 import org.rexi.discordBridgeVelocity.utils.DBManager;
-import org.rexi.velocityUtils.api.VelocityUtilsAPI;
-import org.rexi.velocityUtils.api.VelocityUtilsProvider;
 import org.slf4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
@@ -59,7 +57,7 @@ public class DiscordBridgeVelocity {
     private final Path dataDirectory;
     private DBManager dbManager;
     private LuckPerms luckPerms = null;
-    private VelocityUtilsAPI velocityUtils = null;
+    private Object velocityUtils = null;
     private RankSyncTask rankSyncTask;
 
     private Map<String, String> configValues = new HashMap<>();
@@ -88,11 +86,7 @@ public class DiscordBridgeVelocity {
             this.luckPerms = null;
         }
 
-        try {
-            this.velocityUtils = VelocityUtilsProvider.get();
-        } catch (IllegalStateException e) {
-            this.velocityUtils = null;
-        }
+        loadVelocityUtils();
 
         initializeBot();
 
@@ -207,6 +201,24 @@ public class DiscordBridgeVelocity {
                 }
             }
 
+            List<Object> listeners = new ArrayList<>();
+            listeners.add(new LinkListener(this));
+            listeners.add(new InfoListener(this));
+            listeners.add(new UserInfoListener(this));
+            listeners.add(new ForceUnlinkListener(this));
+            listeners.add(new UnlinkListener(this));
+            listeners.add(new GetPlayerListener(this));
+            listeners.add(new DiscordChatListener(this));
+            listeners.add(new ReloadRanksListener(this, luckPerms));
+            listeners.add(new SyncRanksListener(this));
+            listeners.add(new DiscordRoleRewardsListener(this));
+            listeners.add(new IPListener(this));
+            listeners.add(new AlertListener(this, velocityUtils));
+            listeners.add(new StafflistListener(this, velocityUtils));
+            listeners.add(new VlistListener(this, velocityUtils));
+            listeners.add(new StaffchatListener(this, velocityUtils));
+            listeners.add(new AdminchatListener(this, velocityUtils));
+
             jda = JDABuilder.createDefault(token,
                             EnumSet.of(
                                     GatewayIntent.GUILD_MESSAGES,
@@ -216,23 +228,7 @@ public class DiscordBridgeVelocity {
                             ))
                     .setActivity(activity)
                     .setStatus(status)
-                    .addEventListeners(
-                            new LinkListener(this),
-                            new InfoListener(this),
-                            new UserInfoListener(this),
-                            new ForceUnlinkListener(this),
-                            new UnlinkListener(this),
-                            new GetPlayerListener(this),
-                            new DiscordChatListener(this),
-                            new ReloadRanksListener(this, luckPerms),
-                            new SyncRanksListener(this),
-                            new AlertListener(this, velocityUtils),
-                            new StafflistListener(this, velocityUtils),
-                            new VlistListener(this, velocityUtils),
-                            new StaffchatListener(this, velocityUtils),
-                            new AdminchatListener(this, velocityUtils),
-                            new DiscordRoleRewardsListener(this)
-                    )
+                    .addEventListeners(listeners.toArray())
                     .disableCache(
                             CacheFlag.VOICE_STATE,
                             CacheFlag.EMOJI,
@@ -256,6 +252,7 @@ public class DiscordBridgeVelocity {
                             .addOption(OptionType.STRING, "user", "ID or mention", true),
                     Commands.slash("getplayer", "Gets Links information for a Minecraft Player")
                             .addOption(OptionType.STRING, "name", "Minecraft Name", true),
+                    Commands.slash("ip", "Gets server information"),
                     // VelocityUtils Commands
                     Commands.slash("stafflist", "See the list of online staff members"),
                     Commands.slash("staffchat", "Send a message to the minecraft staff chat")
@@ -428,4 +425,32 @@ public class DiscordBridgeVelocity {
     public Component legacy(String s) {
         return LEGACY_HEX_SERIALIZER.deserialize(s);
     }
+
+    private boolean isVelocityUtilsPresent() {
+        return server.getPluginManager().isLoaded("velocityutils");
+    }
+
+    private void loadVelocityUtils() {
+        if (!isVelocityUtilsPresent()) {
+            logger.info("VelocityUtils not found, related features disabled.");
+            return;
+        }
+
+        try {
+            Class<?> providerClass = Class.forName(
+                    "org.rexi.velocityUtils.api.VelocityUtilsProvider"
+            );
+
+            velocityUtils = providerClass
+                    .getMethod("get")
+                    .invoke(null);
+
+            logger.info("VelocityUtils hooked successfully.");
+
+        } catch (Exception e) {
+            logger.error("Failed to hook VelocityUtils, features disabled.", e);
+            velocityUtils = null;
+        }
+    }
+
 }

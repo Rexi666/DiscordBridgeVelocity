@@ -6,7 +6,6 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.rexi.discordBridgeVelocity.DiscordBridgeVelocity;
-import org.rexi.velocityUtils.api.VelocityUtilsAPI;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +14,9 @@ import java.util.Map;
 public class StafflistListener extends ListenerAdapter {
 
     private final DiscordBridgeVelocity plugin;
-    private final VelocityUtilsAPI velocityUtils;
+    private final Object velocityUtils;
 
-    public StafflistListener(DiscordBridgeVelocity plugin, VelocityUtilsAPI velocityUtils) {
+    public StafflistListener(DiscordBridgeVelocity plugin, Object velocityUtils) {
         this.plugin = plugin;
         this.velocityUtils = velocityUtils;
     }
@@ -25,6 +24,12 @@ public class StafflistListener extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         if (!event.getName().equalsIgnoreCase("stafflist")) return;
+
+        if (velocityUtils == null) {
+            event.reply(plugin.getConfig("discord_messages.velocity_utils_commands_disabled", "❌ This command is disabled"))
+                    .setEphemeral(true).queue();
+            return;
+        }
 
         Member executor = event.getMember();
         if (executor == null) {
@@ -49,7 +54,18 @@ public class StafflistListener extends ListenerAdapter {
             return;
         }
 
-        Map<String, String[]> staffList = velocityUtils.getStaffList();
+        Map<String, String[]> staffList;
+
+        try {
+            staffList = (Map<String, String[]>) velocityUtils.getClass()
+                    .getMethod("getStaffList")
+                    .invoke(velocityUtils);
+        } catch (Exception e) {
+            e.printStackTrace();
+            event.reply(plugin.getConfig("discord_messages.velocity_utils_commands_disabled", "❌ This command is disabled"))
+                    .setEphemeral(true).queue();
+            return;
+        }
 
         if (staffList.isEmpty()) {
             event.reply(plugin.getConfig("discord_messages.stafflist.no_staff", "❌ There are no staff members connected.")).setEphemeral(true).queue();

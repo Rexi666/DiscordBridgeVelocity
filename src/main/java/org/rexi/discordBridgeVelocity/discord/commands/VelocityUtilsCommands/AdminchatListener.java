@@ -4,17 +4,17 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.rexi.discordBridgeVelocity.DiscordBridgeVelocity;
-import org.rexi.velocityUtils.api.VelocityUtilsAPI;
 
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 
 public class AdminchatListener extends ListenerAdapter {
 
     private final DiscordBridgeVelocity plugin;
-    private final VelocityUtilsAPI velocityUtils;
+    private final Object velocityUtils;
 
-    public AdminchatListener(DiscordBridgeVelocity plugin, VelocityUtilsAPI velocityUtils) {
+    public AdminchatListener(DiscordBridgeVelocity plugin, Object velocityUtils) {
         this.plugin = plugin;
         this.velocityUtils = velocityUtils;
     }
@@ -22,6 +22,12 @@ public class AdminchatListener extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         if (!event.getName().equalsIgnoreCase("adminchat")) return;
+
+        if (velocityUtils == null) {
+            event.reply(plugin.getConfig("discord_messages.velocity_utils_commands_disabled", "❌ This command is disabled"))
+                    .setEphemeral(true).queue();
+            return;
+        }
 
         Member executor = event.getMember();
         if (executor == null) {
@@ -61,8 +67,17 @@ public class AdminchatListener extends ListenerAdapter {
             return;
         }
 
-        velocityUtils.sendAdminChatMessage(minecraftNameOpt.get(), message, "discord");
-        event.reply(plugin.getConfig("discord_messages.staff_admin_chat_sent", "✅ Message sent to the minecraft chat."))
-                .setEphemeral(true).queue();
+        try {
+            velocityUtils.getClass()
+                    .getMethod("sendAdminChatMessage", String.class, String.class, String.class)
+                    .invoke(velocityUtils, minecraftNameOpt.get(), message, "discord");
+
+            event.reply(plugin.getConfig("discord_messages.staff_admin_chat_sent", "✅ Message sent to the minecraft chat."))
+                    .setEphemeral(true).queue();
+        } catch (Exception e) {
+            e.printStackTrace();
+            event.reply(plugin.getConfig("discord_messages.velocity_utils_commands_disabled", "❌ This command is disabled"))
+                    .setEphemeral(true).queue();
+        }
     }
 }

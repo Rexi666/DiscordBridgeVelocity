@@ -6,7 +6,6 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.rexi.discordBridgeVelocity.DiscordBridgeVelocity;
-import org.rexi.velocityUtils.api.VelocityUtilsAPI;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +14,9 @@ import java.util.Map;
 public class VlistListener extends ListenerAdapter {
 
     private final DiscordBridgeVelocity plugin;
-    private final VelocityUtilsAPI velocityUtils;
+    private final Object velocityUtils;
 
-    public VlistListener(DiscordBridgeVelocity plugin, VelocityUtilsAPI velocityUtils) {
+    public VlistListener(DiscordBridgeVelocity plugin, Object velocityUtils) {
         this.plugin = plugin;
         this.velocityUtils = velocityUtils;
     }
@@ -25,6 +24,12 @@ public class VlistListener extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         if (!event.getName().equalsIgnoreCase("vlist")) return;
+
+        if (velocityUtils == null) {
+            event.reply(plugin.getConfig("discord_messages.velocity_utils_commands_disabled", "❌ This command is disabled"))
+                    .setEphemeral(true).queue();
+            return;
+        }
 
         Member executor = event.getMember();
         if (executor == null) {
@@ -56,7 +61,18 @@ public class VlistListener extends ListenerAdapter {
             return;
         }
 
-        Map<String, List<String>> vlist = velocityUtils.getList(byrank);
+        Map<String, List<String>> vlist;
+
+        try {
+            vlist = (Map<String, List<String>>) velocityUtils.getClass()
+                    .getMethod("getList", boolean.class)
+                    .invoke(velocityUtils, byrank);
+        } catch (Exception e) {
+            e.printStackTrace();
+            event.reply(plugin.getConfig("discord_messages.velocity_utils_commands_disabled", "❌ This command is disabled"))
+                    .setEphemeral(true).queue();
+            return;
+        }
 
         if (vlist.isEmpty()) {
             event.reply(plugin.getConfig("discord_messages.vlist.no_players", "❌ There are no players connected.")).setEphemeral(true).queue();
