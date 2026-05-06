@@ -54,6 +54,7 @@ Perfect for global chat, staff chat, or community channels.
 ### ⚙️ Additional Features
 - Modular system for Velocity.
 - Clean, easy-to-read configuration files.
+- Discord Counter Stats for online players.
 
 ---
 

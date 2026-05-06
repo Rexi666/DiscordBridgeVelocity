@@ -25,6 +25,7 @@ import net.luckperms.api.LuckPermsProvider;
 import org.bstats.velocity.Metrics;
 import org.rexi.discordBridgeVelocity.commands.DiscordBridgeCommand;
 import org.rexi.discordBridgeVelocity.commands.LinkCommand;
+import org.rexi.discordBridgeVelocity.discord.CounterTask;
 import org.rexi.discordBridgeVelocity.discord.DiscordChatListener;
 import org.rexi.discordBridgeVelocity.discord.DiscordDailyRewardsTask;
 import org.rexi.discordBridgeVelocity.discord.RankSyncTask;
@@ -62,6 +63,7 @@ public class DiscordBridgeVelocity {
     private LuckPerms luckPerms = null;
     private Object velocityUtils = null;
     private RankSyncTask rankSyncTask;
+    private CounterTask counterTask;
 
     private Map<String, String> configValues = new HashMap<>();
     private final Map<String, String> linkedChannels = new HashMap<>();
@@ -98,8 +100,13 @@ public class DiscordBridgeVelocity {
         this.rankSyncTask = new RankSyncTask(this, server, luckPerms);
         this.rankSyncTask.start();
 
+        this.counterTask = new CounterTask(this, server);
+        this.counterTask.start();
+
         server.getCommandManager().register("discordbridge", new DiscordBridgeCommand(this));
         server.getCommandManager().register("link", new LinkCommand(this, luckPerms));
+
+        server.getEventManager().register(this, counterTask);
 
         Metrics metrics = metricsFactory.make(this, 27858);
 
@@ -147,6 +154,9 @@ public class DiscordBridgeVelocity {
     }
     public RankSyncTask getRankSyncTask() {
         return rankSyncTask;
+    }
+    public CounterTask getCounterTask() {
+        return counterTask;
     }
 
     public void initializeBot() {

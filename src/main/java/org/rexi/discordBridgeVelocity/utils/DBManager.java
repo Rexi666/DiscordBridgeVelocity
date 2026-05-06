@@ -22,25 +22,23 @@ public class DBManager {
         this.mysqlUser = mysqlUser;
         this.mysqlPass = mysqlPass;
 
-        if (dbType.equalsIgnoreCase("MYSQL")) {
-            try {
-                Class.forName("com.mysql.cj.jdbc.Driver");
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
+        if (isMysql()) {
+            try { Class.forName("com.mysql.cj.jdbc.Driver"); }
+            catch (ClassNotFoundException e) { e.printStackTrace(); }
         } else {
-            try {
-                Class.forName("org.sqlite.JDBC");
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
+            try { Class.forName("org.sqlite.JDBC"); }
+            catch (ClassNotFoundException e) { e.printStackTrace(); }
         }
 
         initTable();
     }
 
+    private boolean isMysql() {
+        return dbType.equalsIgnoreCase("mysql");
+    }
+
     private Connection getConnection() throws SQLException {
-        if (dbType.equalsIgnoreCase("MYSQL")) {
+        if (isMysql()) {
             return DriverManager.getConnection(
                     "jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase + "?useSSL=false",
                     mysqlUser, mysqlPass
@@ -51,27 +49,50 @@ public class DBManager {
     }
 
     private void initTable() throws SQLException {
-        String sql = "CREATE TABLE IF NOT EXISTS discord_links (" +
-                "minecraft_uuid TEXT PRIMARY KEY, " +
-                "discord_id TEXT NOT NULL, " +
-                "minecraft_name TEXT NOT NULL, " +
+        String autoIncrement = isMysql() ? "AUTO_INCREMENT" : "AUTOINCREMENT";
+
+        String sqlLinks = "CREATE TABLE IF NOT EXISTS discord_links (" +
+                "minecraft_uuid VARCHAR(36) PRIMARY KEY, " +
+                "discord_id VARCHAR(20) NOT NULL, " +
+                "minecraft_name VARCHAR(16) NOT NULL, " +
                 "linked_at BIGINT NOT NULL, " +
-                "recovery_code TEXT UNIQUE NOT NULL" +
+                "recovery_code VARCHAR(8) UNIQUE NOT NULL" +
                 ")";
+
+        String sqlMaxPlayers = "CREATE TABLE IF NOT EXISTS max_players (" +
+                "id INTEGER PRIMARY KEY " + autoIncrement + ", " +
+                "max_count INTEGER NOT NULL, " +
+                "recorded_at BIGINT NOT NULL" +
+                ")";
+
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            stmt.execute(sql);
+            stmt.execute(sqlLinks);
+            stmt.execute(sqlMaxPlayers);
         }
     }
 
     public void saveLink(String uuid, String name, String discordId) {
         String recoveryCode = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        String sql = "INSERT INTO discord_links (minecraft_uuid, minecraft_name, discord_id, recovery_code, linked_at) " +
-                "VALUES (?, ?, ?, ?, ?) " +
-                "ON CONFLICT(minecraft_uuid) DO UPDATE SET " +
-                "minecraft_name = excluded.minecraft_name, " +
-                "discord_id = excluded.discord_id, " +
-                "recovery_code = excluded.recovery_code, " +
-                "linked_at = excluded.linked_at";
+
+        String sql;
+        if (isMysql()) {
+            sql = "INSERT INTO discord_links (minecraft_uuid, minecraft_name, discord_id, recovery_code, linked_at) " +
+                    "VALUES (?, ?, ?, ?, ?) " +
+                    "ON DUPLICATE KEY UPDATE " +
+                    "minecraft_name = VALUES(minecraft_name), " +
+                    "discord_id = VALUES(discord_id), " +
+                    "recovery_code = VALUES(recovery_code), " +
+                    "linked_at = VALUES(linked_at)";
+        } else {
+            sql = "INSERT INTO discord_links (minecraft_uuid, minecraft_name, discord_id, recovery_code, linked_at) " +
+                    "VALUES (?, ?, ?, ?, ?) " +
+                    "ON CONFLICT(minecraft_uuid) DO UPDATE SET " +
+                    "minecraft_name = excluded.minecraft_name, " +
+                    "discord_id = excluded.discord_id, " +
+                    "recovery_code = excluded.recovery_code, " +
+                    "linked_at = excluded.linked_at";
+        }
+
         try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid);
             stmt.setString(2, name);
@@ -103,9 +124,7 @@ public class DBManager {
             stmt.setString(2, identifier);
             stmt.setString(3, identifier);
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return Optional.ofNullable(rs.getString("minecraft_uuid"));
-            }
+            if (rs.next()) return Optional.ofNullable(rs.getString("minecraft_uuid"));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -164,7 +183,6 @@ public class DBManager {
     public List<Map<String, String>> getAllLinkedPlayers() {
         List<Map<String, String>> linkedPlayers = new ArrayList<>();
         String sql = "SELECT minecraft_uuid, discord_id FROM discord_links";
-
         try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -176,7 +194,41 @@ public class DBManager {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return linkedPlayers;
+    }
+
+    public void updateMaxPlayers(int currentCount) {
+        if (currentCount <= getMaxPlayers()) return;
+
+        String sql = "INSERT INTO max_players (max_count, recorded_at) VALUES (?, ?)";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, currentCount);
+            stmt.setLong(2, System.currentTimeMillis());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public int getMaxPlayers() {
+        String sql = "SELECT max_count FROM max_players ORDER BY max_count DESC LIMIT 1";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) return rs.getInt("max_count");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public Optional<Long> getMaxPlayersDate() {
+        String sql = "SELECT recorded_at FROM max_players ORDER BY max_count DESC LIMIT 1";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) return Optional.of(rs.getLong("recorded_at"));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
     }
 }

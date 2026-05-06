@@ -75,6 +75,18 @@ velocity_utils_commands: # Need to have VelocityUtils plugin installed
   adminchat: # Admins can use /adminchat to send a message to the minecraft admin chat. They need to be linked
     enabled: true
 
+discord_counter:
+  enabled: false
+  channels:
+    connected:
+      enabled: true
+      channel_id: "123456789123456789" # Channel ID for connected players count
+      text: "Players Online: {count}" # Text to display in the channel name, {count} will be replaced with the actual player count
+    max:
+      enabled: true
+      channel_id: "987654321987654321" # Channel ID for max players count
+      text: "Max Players: {count}" # Text to display in the channel name, {count} will be replaced with the actual max player count
+
 discord_messages:
   link-message:
     title: "🔗 Link Your Account"
