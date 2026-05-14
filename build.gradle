@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'org.rexi'
-version = '1.5'
+version = '1.6'
 
 repositories {
     mavenCentral()
@@ -32,6 +32,7 @@ dependencies {
     compileOnly 'net.luckperms:api:5.4'
     implementation 'org.bstats:bstats-velocity:3.0.0'
     compileOnly 'com.github.Rexi666:VelocityUtils:3.3.1'
+    implementation 'org.yaml:snakeyaml:2.2'
 }
 
 shadowJar {
@@ -40,6 +41,7 @@ shadowJar {
     relocate 'okhttp3', 'org.rexi.shaded.okhttp3'
     relocate 'org.json', 'org.rexi.shaded.json'
     relocate 'org.bstats', 'com.rexi.shaded.lib.bstats'
+    relocate 'org.yaml.snakeyaml', 'org.rexi.shaded.snakeyaml'
     mergeServiceFiles()
 }
 

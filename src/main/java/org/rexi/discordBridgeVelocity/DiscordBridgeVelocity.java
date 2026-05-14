@@ -35,6 +35,7 @@ import org.rexi.discordBridgeVelocity.discord.listeners.DiscordRoleRewardsListen
 import org.rexi.discordBridgeVelocity.utils.DBManager;
 import org.rexi.discordBridgeVelocity.utils.UpdateChecker;
 import org.slf4j.Logger;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
@@ -345,7 +346,7 @@ public class DiscordBridgeVelocity {
             }
 
             // Cargar config
-            Yaml yaml = new Yaml(new SafeConstructor());
+            Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
             configValues = yaml.load(new FileInputStream(configFile));
         } catch (IOException e) {
             logger.error("Error trying to read or create config.yml", e);
