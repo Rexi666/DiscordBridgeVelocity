@@ -37,7 +37,12 @@ dependencies {
 
 shadowJar {
     archiveClassifier.set("")
-    relocate 'net.dv8tion.jda', 'org.rexi.shaded.jda'
+
+    relocate('net.dv8tion.jda', 'org.rexi.shaded.jda') {
+        exclude 'net.dv8tion.jda.api.utils.**'
+        exclude 'net.dv8tion.jda.internal.utils.**'
+    }
+
     relocate 'okhttp3', 'org.rexi.shaded.okhttp3'
     relocate 'org.json', 'org.rexi.shaded.json'
     relocate 'org.bstats', 'com.rexi.shaded.lib.bstats'

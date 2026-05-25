@@ -65,7 +65,7 @@ public class VlistListener extends ListenerAdapter {
 
         try {
             vlist = (Map<String, List<String>>) velocityUtils.getClass()
-                    .getMethod("getList", boolean.class)
+                    .getMethod("getList", Boolean.class)
                     .invoke(velocityUtils, byrank);
         } catch (Exception e) {
             e.printStackTrace();
