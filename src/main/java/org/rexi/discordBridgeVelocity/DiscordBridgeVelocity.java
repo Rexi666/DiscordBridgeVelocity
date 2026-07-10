@@ -473,7 +473,7 @@ public class DiscordBridgeVelocity {
     public void PostLogin(PostLoginEvent event) {
         Player player = event.getPlayer();
         if (player.hasPermission("discordbridge.admin")) {
-            new UpdateChecker(server, this, BuildConstants.VERSION, "https://raw.githubusercontent.com/Rexi666/VelocityUtils/main/latest-version.txt").checkForUpdatesPlayer(player);
+            new UpdateChecker(server, this, BuildConstants.VERSION, "https://raw.githubusercontent.com/Rexi666/DiscordBridgeVelocity/main/latest-version.txt").checkForUpdatesPlayer(player);
         }
     }
 }

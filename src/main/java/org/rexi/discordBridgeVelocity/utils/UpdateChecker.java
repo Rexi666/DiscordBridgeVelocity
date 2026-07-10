@@ -37,7 +37,7 @@ public class UpdateChecker {
 
                 if (!latestVersion.equalsIgnoreCase(currentVersion)) {
                     String message = plugin.getConfig("messages.new_version", "&c⚠ A new version of DiscordBridgeVelocity is available: {version}! Download it from: {url}")
-                            .replace("{version}", latestVersion).replace("{url}", "https://www.spigotmc.org/resources/discordbridgevelocity.130647/");
+                            .replace("{version}", latestVersion).replace("{url}", "https://modrinth.com/plugin/discordbridgevelocity");
                     server.getConsoleCommandSource().sendMessage(legacy(message));
                 }
             } catch (IOException e) {
@@ -57,9 +57,9 @@ public class UpdateChecker {
 
                 if (!latestVersion.equalsIgnoreCase(currentVersion)) {
                     String message = plugin.getConfig("messages.new_version", "&c⚠ A new version of DiscordBridgeVelocity is available: {version}! Download it from: {url}")
-                            .replace("{version}", latestVersion).replace("{url}", "https://www.spigotmc.org/resources/discordbridgevelocity.130647/");
+                            .replace("{version}", latestVersion).replace("{url}", "https://modrinth.com/plugin/discordbridgevelocity");
                     Component tpLine = legacy(message)
-                            .clickEvent(ClickEvent.openUrl("https://www.spigotmc.org/resources/discordbridgevelocity.130647/"));
+                            .clickEvent(ClickEvent.openUrl("https://modrinth.com/plugin/discordbridgevelocity"));
                     player.sendMessage(tpLine);
                 }
             } catch (IOException e) {

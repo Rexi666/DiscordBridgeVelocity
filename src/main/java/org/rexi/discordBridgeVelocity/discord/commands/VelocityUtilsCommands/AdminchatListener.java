@@ -5,7 +5,6 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.rexi.discordBridgeVelocity.DiscordBridgeVelocity;
 
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 
