@@ -1,5 +1,7 @@
 package org.rexi.discordBridgeVelocity.utils;
 
+import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
@@ -18,26 +20,27 @@ public class UpdateChecker {
     private final ProxyServer server;
     private final DiscordBridgeVelocity plugin;
     private final String currentVersion;
-    private final String updateUrl;
 
-    public UpdateChecker(ProxyServer server, DiscordBridgeVelocity plugin, String currentVersion, String updateUrl) {
+    public UpdateChecker(ProxyServer server, DiscordBridgeVelocity plugin, String currentVersion) {
         this.server = server;
         this.plugin = plugin;
         this.currentVersion = currentVersion;
-        this.updateUrl = updateUrl;
     }
 
-    public void checkForUpdates() {
+    private final String lastVersion = "https://raw.githubusercontent.com/Rexi666/DiscordBridgeVelocity/main/latest-version.txt";
+    private final String updateUrl = "https://modrinth.com/plugin/discordbridgevelocity";
+
+    public void checkForUpdatesConsole() {
         server.getScheduler().buildTask(plugin, () -> {
             try {
-                URL url = new URL(updateUrl);
+                URL url = new URL(lastVersion);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
                 String latestVersion = reader.readLine().trim();
                 reader.close();
 
                 if (!latestVersion.equalsIgnoreCase(currentVersion)) {
                     String message = plugin.getConfig("messages.new_version", "&c⚠ A new version of DiscordBridgeVelocity is available: {version}! Download it from: {url}")
-                            .replace("{version}", latestVersion).replace("{url}", "https://modrinth.com/plugin/discordbridgevelocity");
+                            .replace("{version}", latestVersion).replace("{url}", updateUrl);
                     server.getConsoleCommandSource().sendMessage(legacy(message));
                 }
             } catch (IOException e) {
@@ -50,16 +53,16 @@ public class UpdateChecker {
     public void checkForUpdatesPlayer(Player player) {
         server.getScheduler().buildTask(plugin, () -> {
             try {
-                URL url = new URL(updateUrl);
+                URL url = new URL(lastVersion);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
                 String latestVersion = reader.readLine().trim();
                 reader.close();
 
                 if (!latestVersion.equalsIgnoreCase(currentVersion)) {
                     String message = plugin.getConfig("messages.new_version", "&c⚠ A new version of DiscordBridgeVelocity is available: {version}! Download it from: {url}")
-                            .replace("{version}", latestVersion).replace("{url}", "https://modrinth.com/plugin/discordbridgevelocity");
+                            .replace("{version}", latestVersion).replace("{url}", updateUrl);
                     Component tpLine = legacy(message)
-                            .clickEvent(ClickEvent.openUrl("https://modrinth.com/plugin/discordbridgevelocity"));
+                            .clickEvent(ClickEvent.openUrl(updateUrl));
                     player.sendMessage(tpLine);
                 }
             } catch (IOException e) {
@@ -71,5 +74,13 @@ public class UpdateChecker {
 
     private Component legacy(String s) {
         return LegacyComponentSerializer.legacyAmpersand().deserialize(s);
+    }
+
+    @Subscribe
+    public void PostLogin(PostLoginEvent event) {
+        Player player = event.getPlayer();
+        if (player.hasPermission("discordbridge.admin")) {
+            checkForUpdatesPlayer(player);
+        }
     }
 }

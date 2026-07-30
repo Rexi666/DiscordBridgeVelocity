@@ -87,6 +87,21 @@ discord_counter:
       channel_id: "987654321987654321" # Channel ID for max players count
       text: "Max Players: {count}" # Text to display in the channel name, {count} will be replaced with the actual max player count
 
+AI:
+  enabled: false
+  commands:
+    - "ai"
+    - "help"
+  allow_dms: true
+  allow_mentions: true
+  base_url: "https://api.openai.com/v1"
+  api_key: "YOUR_API_KEY"
+  model: "YOUR_MODEL"
+  context: "You are a helpful assistant for a Minecraft server. You will answer questions about the server, provide information about the server's features, and assist players with any issues they may encounter. You should always be polite and provide accurate information. If you do not know the answer to a question, you should say so and suggest that the player contact the server staff for assistance."
+  temperature: 0.7
+  max_tokens: 500
+  max_conversation_length: 5
+
 discord_messages:
   link-message:
     title: "🔗 Link Your Account"
@@ -251,6 +266,9 @@ discord_messages:
   staff_admin_chat_sent: "✅ Message sent to the minecraft chat."
   staff_chat_usage: "Usage: `/staffchat <message>`"
   admin_chat_usage: "Usage: `/adminchat <message>`"
+  feature_disabled: "❌ This feature is disabled"
+  ai_usage: "Usage: `{command} <message>`"
+  ai_error: "❌ Error trying to send your message to the AI. Please try again later."
   button_yes: "✅ Yes"
   button_no: "❌ No"
 

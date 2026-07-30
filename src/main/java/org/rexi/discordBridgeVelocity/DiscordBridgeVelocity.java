@@ -1,20 +1,19 @@
 package org.rexi.discordBridgeVelocity;
 
 import com.google.inject.Inject;
-import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
@@ -52,7 +51,7 @@ import java.util.concurrent.TimeUnit;
         name = "Discord Bridge Velocity",
         version = BuildConstants.VERSION,
         authors = {"Rexi666"},
-        dependencies = {@Dependency(id = "luckperms", optional = true),
+        dependencies = {@Dependency(id = "luckperms"),
                 @Dependency(id = "litebans", optional = true),
         @Dependency(id = "velocityutils", optional = true)})
 public class DiscordBridgeVelocity {
@@ -65,6 +64,7 @@ public class DiscordBridgeVelocity {
     private Object velocityUtils = null;
     private RankSyncTask rankSyncTask;
     private CounterTask counterTask;
+    private UpdateChecker updateChecker;
 
     private Map<String, String> configValues = new HashMap<>();
     private final Map<String, String> linkedChannels = new HashMap<>();
@@ -86,7 +86,8 @@ public class DiscordBridgeVelocity {
         loadLinkedRanks();
         initializeDatabase();
 
-        new UpdateChecker(server, this, BuildConstants.VERSION, "https://raw.githubusercontent.com/Rexi666/DiscordBridgeVelocity/main/latest-version.txt").checkForUpdates();
+        updateChecker = new UpdateChecker(server, this, BuildConstants.VERSION);
+        updateChecker.checkForUpdatesConsole();
 
         try {
             this.luckPerms = LuckPermsProvider.get();
@@ -108,6 +109,7 @@ public class DiscordBridgeVelocity {
         server.getCommandManager().register("link", new LinkCommand(this, luckPerms));
 
         server.getEventManager().register(this, counterTask);
+        server.getEventManager().register(this, updateChecker);
 
         Metrics metrics = metricsFactory.make(this, 27858);
 
@@ -224,7 +226,7 @@ public class DiscordBridgeVelocity {
             listeners.add(new ForceUnlinkListener(this));
             listeners.add(new UnlinkListener(this));
             listeners.add(new GetPlayerListener(this));
-            listeners.add(new DiscordChatListener(this));
+            listeners.add(new DiscordChatListener(this, server));
             listeners.add(new ReloadRanksListener(this, luckPerms));
             listeners.add(new SyncRanksListener(this));
             listeners.add(new DiscordRoleRewardsListener(this));
@@ -234,6 +236,7 @@ public class DiscordBridgeVelocity {
             listeners.add(new VlistListener(this, velocityUtils));
             listeners.add(new StaffchatListener(this, velocityUtils));
             listeners.add(new AdminchatListener(this, velocityUtils));
+            listeners.add(new AiListener(this));
 
             jda = JDABuilder.createDefault(token,
                             EnumSet.of(
@@ -256,43 +259,63 @@ public class DiscordBridgeVelocity {
 
             jda.awaitReady();
 
-            jda.updateCommands().addCommands(
-                    Commands.slash("link", "Link your Discord account with Minecraft"),
-                    Commands.slash("info", "Get information about your linked account"),
-                    Commands.slash("unlink", "Unlinks your account"),
-                    Commands.slash("reloadranks", "Reloads your linked ranks"),
-                    Commands.slash("syncranks", "Syncs ranks for all linked users"),
+            List<CommandData> slashCommands = new ArrayList<>();
+
+            slashCommands.add(Commands.slash("link", "Link your Discord account with Minecraft"));
+            slashCommands.add(Commands.slash("info", "Get information about your linked account"));
+            slashCommands.add(Commands.slash("unlink", "Unlinks your account"));
+            slashCommands.add(Commands.slash("reloadranks", "Reloads your linked ranks"));
+            slashCommands.add(Commands.slash("syncranks", "Syncs ranks for all linked users"));
+            slashCommands.add(
                     Commands.slash("userinfo", "Shows user information")
-                            .addOption(OptionType.STRING, "user", "ID or mention", true),
+                            .addOption(OptionType.STRING, "user", "ID or mention", true)
+            );
+            slashCommands.add(
                     Commands.slash("forceunlink", "Unlinks account for other players")
-                            .addOption(OptionType.STRING, "user", "ID or mention", true),
+                            .addOption(OptionType.STRING, "user", "ID or mention", true)
+            );
+            slashCommands.add(
                     Commands.slash("getplayer", "Gets Links information for a Minecraft Player")
-                            .addOption(OptionType.STRING, "name", "Minecraft Name", true),
-                    Commands.slash("ip", "Gets server information"),
-                    // VelocityUtils Commands
-                    Commands.slash("stafflist", "See the list of online staff members"),
+                            .addOption(OptionType.STRING, "name", "Minecraft Name", true)
+            );
+            slashCommands.add(Commands.slash("ip", "Gets server information"));
+
+            slashCommands.add(Commands.slash("stafflist", "See the list of online staff members"));
+            slashCommands.add(
                     Commands.slash("staffchat", "Send a message to the minecraft staff chat")
-                            .addOption(OptionType.STRING, "message", "Message to send", true),
+                            .addOption(OptionType.STRING, "message", "Message to send", true)
+            );
+            slashCommands.add(
                     Commands.slash("adminchat", "Send a message to the minecraft admin chat")
-                            .addOption(OptionType.STRING, "message", "Message to send", true),
+                            .addOption(OptionType.STRING, "message", "Message to send", true)
+            );
+            slashCommands.add(
                     Commands.slash("vlist", "See the list of online players")
-                            .addOption(OptionType.BOOLEAN, "rank", "Do you want to list by rank?", true),
+                            .addOption(OptionType.BOOLEAN, "rank", "Do you want to list by rank?", true)
+            );
+            slashCommands.add(
                     Commands.slash("alert", "Send alert to the entire network")
                             .addOption(OptionType.INTEGER, "amount", "Number of times to repeat the alert", true)
                             .addOption(OptionType.STRING, "message", "Alert message", true)
-            ).queue();
+            );
+
+            // Comandos de IA desde la config
+            for (String command : getConfig("AI.commands", List.of("ai", "help"))) {
+                slashCommands.add(
+                        Commands.slash(command, "Ask the AI")
+                                .addOption(OptionType.STRING, "mensaje", "Question for the AI", true)
+                );
+            }
+
+            jda.updateCommands()
+                    .addCommands(slashCommands)
+                    .queue();
 
             logger.info("✅ Discord bot initialized: " + jda.getSelfUser().getName());
 
         } catch (Exception e) {
             logger.error("Error trying to initialize discord bot:", e);
         }
-    }
-
-    public void sendBroadcastToServer(String serverName, String message) {
-        server.getServer(serverName).ifPresent(server ->
-                server.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(message))
-        );
     }
 
     public void shutdownBot() {
@@ -466,14 +489,6 @@ public class DiscordBridgeVelocity {
         } catch (Exception e) {
             logger.error("Failed to hook VelocityUtils, features disabled.", e);
             velocityUtils = null;
-        }
-    }
-
-    @Subscribe
-    public void PostLogin(PostLoginEvent event) {
-        Player player = event.getPlayer();
-        if (player.hasPermission("discordbridge.admin")) {
-            new UpdateChecker(server, this, BuildConstants.VERSION, "https://raw.githubusercontent.com/Rexi666/DiscordBridgeVelocity/main/latest-version.txt").checkForUpdatesPlayer(player);
         }
     }
 }

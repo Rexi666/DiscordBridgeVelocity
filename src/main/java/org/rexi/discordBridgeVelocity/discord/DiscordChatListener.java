@@ -1,8 +1,10 @@
 package org.rexi.discordBridgeVelocity.discord;
 
+import com.velocitypowered.api.proxy.ProxyServer;
 import litebans.api.Database;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.rexi.discordBridgeVelocity.DiscordBridgeVelocity;
 
 import java.util.Optional;
@@ -12,9 +14,11 @@ import java.util.concurrent.TimeUnit;
 public class DiscordChatListener extends ListenerAdapter {
 
     private final DiscordBridgeVelocity plugin;
+    private final ProxyServer server;
 
-    public DiscordChatListener(DiscordBridgeVelocity plugin) {
+    public DiscordChatListener(DiscordBridgeVelocity plugin, ProxyServer server) {
         this.plugin = plugin;
+        this.server = server;
     }
 
     @Override
@@ -66,7 +70,9 @@ public class DiscordChatListener extends ListenerAdapter {
                 .replace("{player}", mcName)
                 .replace("{message}", message);
 
-        plugin.sendBroadcastToServer(serverName, formatted);
+        server.getServer(serverName).ifPresent(server ->
+                server.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(formatted))
+        );
 
         plugin.logger.info("[DiscordChat] (" + serverName + ") " + mcName + ": " + message);
     }
